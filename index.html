@@ -3,85 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arena Playbox ERP</title>
+    <title>Arena Playbox Managerial</title>
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f2f2f7; color: #1d1d1f; padding-bottom: 80px; /* Space for bottom bar */ }
-        .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 24px rgba(0,0,0,0.04); }
-        .apple-card { border-radius: 20px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .apple-input { border-radius: 14px; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0, 0, 0, 0.08); transition: all 0.2s; width: 100%; padding: 12px 16px; }
+        body { font-family: 'Inter', sans-serif; background: #f2f2f7; color: #1d1d1f; padding-bottom: 80px; }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        .apple-card { border-radius: 20px; transition: transform 0.2s ease; }
+        .apple-input { border-radius: 14px; background: #ffffff; border: 1px solid #e5e5ea; transition: all 0.2s; width: 100%; padding: 12px 16px; }
         .apple-input:focus { outline: none; border-color: #007aff; box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15); }
-        .btn-taktil { border-radius: 14px; transition: transform 0.1s, opacity 0.2s; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-        .btn-taktil:active { transform: scale(0.94); opacity: 0.8; }
+        .btn-taktil { border-radius: 12px; transition: transform 0.1s, opacity 0.2s; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-taktil:active { transform: scale(0.92); opacity: 0.8; }
         
-        /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.05); z-index: 40; padding-bottom: env(safe-area-inset-bottom); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #e5e5ea; z-index: 40; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { color: #8e8e93; transition: color 0.2s; }
         .nav-item.active { color: #007aff; font-weight: 600; }
         
-        /* Tab Switcher */
         .tab-active { background: #1d1d1f; color: #fff; border-radius: 12px; font-weight: 600; }
         .tab-inactive { color: #8e8e93; font-weight: 500; }
         
-        /* Animations */
-        @keyframes pulse-yellow { 0% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(255, 149, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0); } }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
-        .warn-yellow { animation: pulse-yellow 2s infinite; color: #ff9500; font-weight: bold; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
         .warn-red { animation: pulse-red 2s infinite; color: #ff3b30; font-weight: bold; }
         
-        /* Hide scrollbar for clean UI */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased">
 
     <div id="global-loader" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-md">
-        <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
         <p class="mt-4 text-sm font-medium text-gray-600" id="loader-text">Sinkronisasi Sistem...</p>
     </div>
 
-    <div id="login-screen" class="max-w-sm mx-auto mt-24 px-4">
+    <div id="login-screen" class="max-w-sm mx-auto mt-20 px-4">
         <div class="glass apple-card p-8 text-center shadow-xl">
             <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" alt="Arena Logo" class="w-24 mx-auto mb-4 drop-shadow-md">
-            <h1 class="text-2xl font-bold mb-1">Arena ERP</h1>
-            <p class="text-sm text-gray-500 mb-8">Sistem Operasi Terpusat</p>
+            <h1 class="text-2xl font-extrabold mb-1">Arena Playbox</h1>
+            <p class="text-sm font-semibold tracking-widest text-blue-600 uppercase mb-8">Managerial</p>
             <div class="space-y-4">
-                <input type="text" id="login-user" placeholder="Nama Akun" class="apple-input font-medium text-center">
-                <input type="password" id="login-pass" placeholder="Password" class="apple-input font-medium text-center">
-                <button onclick="APP.login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3.5 font-semibold btn-taktil mt-2 text-base">Masuk</button>
+                <input type="text" id="login-user" placeholder="ID Pengguna" class="apple-input font-medium text-center">
+                <input type="password" id="login-pass" placeholder="Kata Sandi" class="apple-input font-medium text-center">
+                <button onclick="APP.login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3.5 font-bold btn-taktil mt-2 text-base">Masuk</button>
             </div>
         </div>
     </div>
 
     <div id="app-container" class="hidden">
         
-        <div class="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+        <div class="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-3">
                 <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="w-10 h-10">
                 <div>
                     <h2 class="text-lg font-bold leading-tight" id="head-name">Halo, -</h2>
-                    <p class="text-[11px] font-semibold text-blue-600 uppercase tracking-wider" id="head-role">Role</p>
+                    <p class="text-[11px] font-bold text-blue-600 uppercase tracking-wider" id="head-role">Role</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <div id="global-live-status" class="hidden text-xs font-semibold bg-green-100 text-green-700 px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <span id="live-count">0</span>/10 Live
-                </div>
-                <button onclick="APP.logout()" class="text-red-500 font-medium btn-taktil text-sm bg-red-50 px-3 py-1.5 rounded-xl">Keluar</button>
-            </div>
+            <button onclick="APP.logout()" class="text-red-500 font-bold btn-taktil text-xs bg-red-50 px-3 py-2 rounded-xl">KELUAR</button>
         </div>
 
         <div id="branch-switcher" class="hidden px-4 pt-4 max-w-5xl mx-auto">
-            <div class="flex bg-gray-200/50 p-1.5 rounded-2xl border border-gray-200 overflow-x-auto hide-scrollbar">
+            <div class="flex bg-gray-200/60 p-1.5 rounded-2xl border border-gray-200 overflow-x-auto hide-scrollbar">
                 <button onclick="APP.switchBranch('Banda')" id="tab-Banda" class="flex-1 px-4 py-2 tab-active btn-taktil text-sm whitespace-nowrap">Banda</button>
                 <button onclick="APP.switchBranch('Sabang')" id="tab-Sabang" class="flex-1 px-4 py-2 tab-inactive btn-taktil text-sm whitespace-nowrap">Sabang</button>
                 <button onclick="APP.switchBranch('Atim')" id="tab-Atim" class="flex-1 px-4 py-2 tab-inactive btn-taktil text-sm whitespace-nowrap">Atim</button>
@@ -92,38 +80,38 @@
             
             <div id="manager-cards" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="glass apple-card p-4 bg-gradient-to-br from-gray-900 to-black text-white border-none">
-                    <p class="text-[10px] uppercase tracking-wider opacity-70">Omset Hari Ini (All)</p>
-                    <h3 class="text-xl font-bold mt-1" id="m-omset-hari">Rp 0</h3>
+                    <p class="text-[10px] uppercase font-bold tracking-wider opacity-70">Omset Hari Ini (All)</p>
+                    <h3 class="text-xl font-black mt-1" id="m-omset-hari">Rp 0</h3>
                 </div>
                 <div class="glass apple-card p-4 bg-gradient-to-br from-blue-600 to-blue-800 text-white border-none">
-                    <p class="text-[10px] uppercase tracking-wider opacity-80">Omset Bulan Ini</p>
-                    <h3 class="text-xl font-bold mt-1" id="m-omset-bulan">Rp 0</h3>
+                    <p class="text-[10px] uppercase font-bold tracking-wider opacity-80">Omset Bulan Ini</p>
+                    <h3 class="text-xl font-black mt-1" id="m-omset-bulan">Rp 0</h3>
                 </div>
-                <div class="glass apple-card p-4 bg-gradient-to-br from-green-500 to-green-700 text-white border-none manager-only">
-                    <p class="text-[10px] uppercase tracking-wider opacity-80">Net Profit (Bulan)</p>
-                    <h3 class="text-xl font-bold mt-1" id="m-net-profit">Rp 0</h3>
+                <div id="card-net-profit" class="hidden glass apple-card p-4 bg-gradient-to-br from-green-500 to-green-700 text-white border-none">
+                    <p class="text-[10px] uppercase font-bold tracking-wider opacity-80">Laba Bersih (Bulan)</p>
+                    <h3 class="text-xl font-black mt-1" id="m-net-profit">Rp 0</h3>
                 </div>
-                <div class="glass apple-card p-4 bg-white">
-                    <p class="text-[10px] uppercase tracking-wider text-gray-500">Uang Kasir Shift Ini</p>
-                    <h3 class="text-xl font-bold text-gray-800 mt-1" id="a-kasir">Rp 0</h3>
+                <div class="glass apple-card p-4 bg-white" id="card-kasir">
+                    <p class="text-[10px] uppercase font-bold tracking-wider text-gray-500">Kasir Shift Ini</p>
+                    <h3 class="text-xl font-black text-gray-800 mt-1" id="a-kasir">Rp 0</h3>
                 </div>
             </div>
 
             <div id="owner-charts" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="glass apple-card p-5 text-center">
-                        <p class="text-xs text-gray-500 font-semibold uppercase">Tren Teramai</p>
-                        <p class="text-2xl font-bold text-blue-600 mt-1" id="c-peak-day">-</p>
-                        <p class="text-xs text-gray-400 mt-1">Jam: <span id="c-peak-hour">-</span></p>
+                        <p class="text-xs text-gray-500 font-bold uppercase">Tren Teramai</p>
+                        <p class="text-2xl font-black text-blue-600 mt-1" id="c-peak-day">-</p>
+                        <p class="text-xs text-gray-400 mt-1 font-medium">Jam: <span id="c-peak-hour">-</span></p>
                     </div>
                     <div class="glass apple-card p-5 text-center">
-                        <p class="text-xs text-gray-500 font-semibold uppercase">Avg Ticket Size</p>
-                        <p class="text-2xl font-bold text-green-600 mt-1" id="c-avg-ticket">Rp 0</p>
-                        <p class="text-xs text-gray-400 mt-1">Per Pelanggan</p>
+                        <p class="text-xs text-gray-500 font-bold uppercase">Avg Ticket Size</p>
+                        <p class="text-2xl font-black text-green-600 mt-1" id="c-avg-ticket">Rp 0</p>
+                        <p class="text-xs text-gray-400 mt-1 font-medium">Per Pelanggan</p>
                     </div>
                     <div class="glass apple-card p-5 text-center">
-                        <p class="text-xs text-gray-500 font-semibold uppercase">Top Paket Global</p>
-                        <p class="text-xl font-bold text-orange-500 mt-1 truncate" id="c-top-pkg">-</p>
+                        <p class="text-xs text-gray-500 font-bold uppercase">Top Paket Global</p>
+                        <p class="text-xl font-black text-orange-500 mt-1 truncate" id="c-top-pkg">-</p>
                     </div>
                 </div>
                 <div class="glass apple-card p-5">
@@ -134,41 +122,51 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-6" id="ops-section">
+                    
                     <div class="glass apple-card p-5">
                         <h3 class="font-bold text-gray-800 mb-4">Status Unit <span class="branch-lbl text-gray-500 font-normal text-sm"></span></h3>
                         <div id="unit-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
                     </div>
 
-                    <div class="glass apple-card p-5 bg-blue-50/30 border border-blue-100">
-                        <h3 class="font-bold text-gray-800 mb-4">Sewa Baru</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <input type="text" id="f-name" placeholder="Nama Pelanggan" class="apple-input text-sm">
-                            <input type="number" id="f-wa" placeholder="No WA (Contoh: 0812...)" class="apple-input text-sm">
+                    <div class="glass apple-card p-6 border-t-4 border-blue-500 bg-white">
+                        <h3 class="font-extrabold text-gray-900 mb-5 text-lg">📝 Order Baru</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="f-name" placeholder="Nama Pelanggan" class="apple-input font-medium bg-gray-50">
+                            <input type="number" id="f-wa" placeholder="Nomor WA (08...)" class="apple-input font-medium bg-gray-50">
                             
-                            <select id="f-unit" class="apple-input text-sm font-semibold text-blue-700"></select>
+                            <select id="f-unit" class="apple-input font-bold text-blue-700 bg-blue-50/50 border-blue-200"></select>
+                            <select id="f-paket" onchange="APP.calculatePrice()" class="apple-input font-bold bg-gray-50"></select>
                             
-                            <select id="f-paket" onchange="APP.calculatePrice()" class="apple-input text-sm"></select>
-                            
-                            <div class="flex gap-2">
-                                <select id="f-jam" class="apple-input text-sm w-1/2"></select>
-                                <select id="f-menit" class="apple-input text-sm w-1/2"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+                            <div class="col-span-full border-t border-gray-100 pt-4 mt-2">
+                                <p class="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                    <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Jam Mulai Main
+                                </p>
+                                <div class="flex gap-3">
+                                    <select id="f-jam" class="apple-input text-lg font-black w-1/2 text-center bg-gray-50"></select>
+                                    <select id="f-menit" class="apple-input text-lg font-black w-1/2 text-center bg-gray-50">
+                                        <option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+                                    </select>
+                                </div>
                             </div>
                             
-                            <input type="number" id="f-price" placeholder="Tagihan (Rp)" class="apple-input text-sm font-bold text-gray-900 bg-white">
-                            <input type="number" id="f-ongkir" placeholder="Ongkir (Khusus Banda)" class="apple-input text-sm hidden">
+                            <input type="number" id="f-price" placeholder="Nominal Tagihan (Rp)" class="apple-input text-lg font-black text-gray-900 mt-2">
+                            <input type="number" id="f-ongkir" placeholder="Ongkir (Banda)" class="apple-input mt-2 hidden">
                         </div>
-                        <button onclick="APP.submitRental()" class="w-full mt-5 bg-blue-600 text-white p-3.5 rounded-xl font-bold btn-taktil shadow-sm">Simpan Transaksi</button>
+                        <button onclick="APP.submitRental()" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl font-bold btn-taktil text-base shadow-md">Simpan & Mulai Waktu</button>
                     </div>
                 </div>
 
                 <div class="space-y-6">
-                    <div class="glass apple-card p-5 flex flex-col max-h-[500px]">
-                        <h3 class="font-bold text-gray-800 mb-3 shrink-0">Log Hari Ini <span class="branch-lbl text-gray-500 font-normal text-sm"></span></h3>
-                        <div id="log-list" class="space-y-3 overflow-y-auto pr-1 flex-grow pb-2"></div>
+                    <div class="glass apple-card flex flex-col h-[520px]">
+                        <div class="p-4 border-b border-gray-100 bg-white rounded-t-20px">
+                            <h3 class="font-extrabold text-gray-800">Riwayat Hari Ini <span class="branch-lbl text-gray-400 font-normal text-sm"></span></h3>
+                        </div>
+                        <div id="log-list" class="p-3 space-y-3 overflow-y-auto flex-grow bg-gray-50/50 rounded-b-20px"></div>
                     </div>
 
-                    <div class="glass apple-card p-5 border-t-4 border-orange-400">
-                        <h3 class="font-bold text-gray-800 mb-3">🏅 Top 10 Pelanggan</h3>
+                    <div class="glass apple-card p-5 border-t-4 border-orange-500 bg-white">
+                        <h3 class="font-extrabold text-gray-900 mb-3">🏅 Top 10 Pelanggan</h3>
                         <div id="top-customers" class="space-y-2 text-sm"></div>
                     </div>
                 </div>
@@ -179,22 +177,22 @@
             <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                 <h2 class="text-xl font-bold">Database Transaksi</h2>
                 <div class="flex gap-2">
-                    <input type="month" id="filter-month" class="apple-input py-1.5 text-sm w-auto" onchange="APP.renderMasterLogs()">
-                    <button onclick="APP.downloadPDF('print-log-area', 'Laporan_Transaksi')" class="bg-gray-900 text-white px-4 py-1.5 rounded-xl text-sm font-semibold btn-taktil">PDF</button>
+                    <input type="month" id="filter-month" class="apple-input py-1.5 text-sm w-auto font-bold" onchange="APP.renderMasterLogs()">
+                    <button onclick="APP.downloadPDF('print-log-area', 'Laporan_Transaksi')" class="bg-gray-900 text-white px-4 py-1.5 rounded-xl text-sm font-bold btn-taktil">PDF</button>
                 </div>
             </div>
-            <div class="glass apple-card p-5 overflow-x-auto" id="print-log-area">
+            <div class="glass apple-card p-5 overflow-x-auto bg-white" id="print-log-area">
                 <div class="mb-4 text-center hidden" id="kop-log">
-                    <h2 class="text-2xl font-bold">Laporan Transaksi Arena</h2><p class="text-gray-500" id="kop-log-date"></p>
+                    <h2 class="text-2xl font-black">Laporan Transaksi Arena Playbox</h2><p class="text-gray-500 font-medium" id="kop-log-date"></p>
                 </div>
                 <table class="w-full text-left text-sm whitespace-nowrap">
                     <thead>
                         <tr class="text-gray-500 border-b border-gray-200">
-                            <th class="pb-2 font-medium">Tanggal</th>
-                            <th class="pb-2 font-medium">Cabang</th>
-                            <th class="pb-2 font-medium">Pelanggan</th>
-                            <th class="pb-2 font-medium">Paket</th>
-                            <th class="pb-2 font-medium text-right">Tagihan</th>
+                            <th class="pb-3 font-bold uppercase text-[11px]">Waktu</th>
+                            <th class="pb-3 font-bold uppercase text-[11px]">Cabang</th>
+                            <th class="pb-3 font-bold uppercase text-[11px]">Pelanggan</th>
+                            <th class="pb-3 font-bold uppercase text-[11px]">Unit/Paket</th>
+                            <th class="pb-3 font-bold uppercase text-[11px] text-right">Tagihan</th>
                         </tr>
                     </thead>
                     <tbody id="master-log-body" class="divide-y divide-gray-100"></tbody>
@@ -203,42 +201,42 @@
         </div>
 
         <div id="view-expenses" class="hidden max-w-3xl mx-auto p-4 space-y-6 pb-24">
-            <div class="glass apple-card p-6 bg-red-50/50 border border-red-100">
-                <h3 class="font-bold text-red-800 mb-4 text-lg">Catat Pengeluaran Baru</h3>
+            <div class="glass apple-card p-6 bg-red-50/50 border border-red-100 shadow-sm">
+                <h3 class="font-extrabold text-red-800 mb-4 text-lg">Catat Pengeluaran</h3>
                 <div class="space-y-3">
-                    <input type="text" id="ex-name" placeholder="Keterangan (Misal: Beli Token, Gaji Karyawan)" class="apple-input">
+                    <input type="text" id="ex-name" placeholder="Keterangan (Contoh: Token Listrik)" class="apple-input font-medium border-red-200">
                     <div class="flex gap-3">
-                        <select id="ex-branch" class="apple-input w-1/3"><option value="Banda">Banda</option><option value="Sabang">Sabang</option><option value="Atim">Atim</option></select>
-                        <input type="number" id="ex-amount" placeholder="Nominal (Rp)" class="apple-input w-2/3 font-bold text-red-600">
+                        <select id="ex-branch" class="apple-input font-bold border-red-200 w-1/3"><option value="Banda">Banda</option><option value="Sabang">Sabang</option><option value="Atim">Atim</option></select>
+                        <input type="number" id="ex-amount" placeholder="Nominal (Rp)" class="apple-input border-red-200 w-2/3 font-black text-red-600 text-lg">
                     </div>
-                    <button onclick="APP.submitExpense()" class="w-full bg-red-500 text-white p-3.5 rounded-xl font-bold btn-taktil mt-2">Simpan Pengeluaran</button>
+                    <button onclick="APP.submitExpense()" class="w-full bg-red-600 hover:bg-red-700 text-white p-4 rounded-xl font-bold btn-taktil mt-3 shadow-md">Simpan Pengeluaran</button>
                 </div>
             </div>
 
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100" id="print-exp-area">
                 <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-3">
                     <h3 class="font-bold text-gray-800">Riwayat Pengeluaran (Bulan Ini)</h3>
-                    <button onclick="APP.downloadPDF('print-exp-area', 'Laporan_Pengeluaran')" class="bg-gray-200 text-gray-800 px-3 py-1 rounded-lg text-xs font-semibold btn-taktil">Download PDF</button>
+                    <button onclick="APP.downloadPDF('print-exp-area', 'Laporan_Pengeluaran')" class="bg-gray-100 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold btn-taktil">Unduh PDF</button>
                 </div>
-                <div id="expense-list" class="space-y-2 text-sm"></div>
-                <div class="mt-4 pt-3 border-t border-gray-200 flex justify-between font-bold text-lg">
-                    <span>Total:</span><span id="ex-total-view" class="text-red-600">Rp 0</span>
+                <div id="expense-list" class="space-y-1 text-sm"></div>
+                <div class="mt-4 pt-4 border-t-2 border-gray-100 flex justify-between font-black text-xl">
+                    <span>Total Beban:</span><span id="ex-total-view" class="text-red-600">Rp 0</span>
                 </div>
             </div>
         </div>
 
-        <nav id="bottom-nav" class="bottom-nav hidden flex justify-around items-center px-2 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-            <button onclick="APP.switchTab('dashboard')" id="nav-dashboard" class="nav-item active flex flex-col items-center gap-1 w-full btn-taktil">
+        <nav id="bottom-nav" class="bottom-nav hidden flex justify-around items-center px-2 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <button onclick="APP.switchTab('dashboard')" id="nav-dashboard" class="nav-item active flex flex-col items-center gap-1 w-full btn-taktil py-1">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                <span class="text-[10px] font-medium">Ops</span>
+                <span class="text-[10px] font-bold tracking-wide">Operasional</span>
             </button>
-            <button onclick="APP.switchTab('logs')" id="nav-logs" class="nav-item flex flex-col items-center gap-1 w-full btn-taktil hidden">
+            <button onclick="APP.switchTab('logs')" id="nav-logs" class="nav-item flex flex-col items-center gap-1 w-full btn-taktil py-1 hidden">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span class="text-[10px] font-medium">Data</span>
+                <span class="text-[10px] font-bold tracking-wide">Database</span>
             </button>
-            <button onclick="APP.switchTab('expenses')" id="nav-expenses" class="nav-item flex flex-col items-center gap-1 w-full btn-taktil hidden">
+            <button onclick="APP.switchTab('expenses')" id="nav-expenses" class="nav-item flex flex-col items-center gap-1 w-full btn-taktil py-1 hidden">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="text-[10px] font-medium">Beban</span>
+                <span class="text-[10px] font-bold tracking-wide">Pengeluaran</span>
             </button>
         </nav>
 
@@ -259,16 +257,11 @@
 
         const APP = {
             init() {
-                // Pre-fill default month for filter
                 const now = new Date();
                 document.getElementById('filter-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
                 
-                if(STATE.user) {
-                    this.setupUI();
-                    this.fetchData();
-                } else {
-                    document.getElementById('login-screen').classList.remove('hidden');
-                }
+                if(STATE.user) { this.setupUI(); this.fetchData(); } 
+                else { document.getElementById('login-screen').classList.remove('hidden'); }
             },
 
             toggleLoader(show, text = 'Memuat...') {
@@ -297,7 +290,7 @@
                 const p = document.getElementById('login-pass').value.trim();
                 if(!u || !p) return alert("Isi form!");
 
-                this.toggleLoader(true, 'Verifikasi...');
+                this.toggleLoader(true, 'Verifikasi Kredensial...');
                 try {
                     const res = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'login', username: u, password: p }) });
                     const data = await res.json();
@@ -316,16 +309,12 @@
                         localStorage.setItem('arena_user', JSON.stringify(STATE.user));
                         
                         document.getElementById('login-screen').classList.add('hidden');
-                        this.setupUI();
-                        await this.fetchData();
-                    } else { alert("Kredensial salah!"); }
-                } catch(e) { alert("Koneksi server gagal."); } finally { this.toggleLoader(false); }
+                        this.setupUI(); await this.fetchData();
+                    } else { alert("Data tidak ditemukan di database!"); }
+                } catch(e) { alert("Gagal koneksi ke server n8n."); } finally { this.toggleLoader(false); }
             },
 
-            logout() {
-                localStorage.removeItem('arena_user');
-                location.reload();
-            },
+            logout() { localStorage.removeItem('arena_user'); location.reload(); },
 
             setupUI() {
                 document.getElementById('login-screen').classList.add('hidden');
@@ -337,24 +326,27 @@
                 if(u.role === 'admin') {
                     document.getElementById('branch-switcher').classList.remove('hidden');
                 } else if(u.role === 'shareholder') {
-                    document.getElementById('ops-section').classList.add('hidden'); // Sembunyikan form sewa
+                    document.getElementById('ops-section').classList.add('hidden'); 
                     document.getElementById('manager-cards').classList.remove('hidden');
                     document.getElementById('owner-charts').classList.remove('hidden');
                     document.getElementById('bottom-nav').classList.remove('hidden');
                     document.getElementById('nav-logs').classList.remove('hidden');
+                    document.getElementById('card-kasir').classList.add('hidden'); // Hilangkan kasir shift dr owner
                 } else if(u.role === 'manager') {
                     document.getElementById('branch-switcher').classList.remove('hidden');
                     document.getElementById('manager-cards').classList.remove('hidden');
-                    document.querySelectorAll('.manager-only').forEach(el => el.classList.remove('hidden'));
+                    document.getElementById('card-net-profit').classList.remove('hidden'); // Hanya Dimas yg lihat ini
                     document.getElementById('bottom-nav').classList.remove('hidden');
                     document.getElementById('nav-logs').classList.remove('hidden');
                     document.getElementById('nav-expenses').classList.remove('hidden');
                 }
 
-                // Init Form Time
+                // Setup Jam (Otomatis jam sekarang)
                 const jSel = document.getElementById('f-jam');
                 jSel.innerHTML = '';
                 for(let i=0; i<24; i++) jSel.innerHTML += `<option value="${i.toString().padStart(2,'0')}">${i.toString().padStart(2,'0')}</option>`;
+                const curH = new Date().getHours().toString().padStart(2,'0');
+                jSel.value = curH;
 
                 this.switchBranch(STATE.activeBranch);
             },
@@ -379,9 +371,7 @@
                 document.querySelectorAll('.branch-lbl').forEach(el => el.innerText = `(${b})`);
                 ['Banda','Sabang','Atim'].forEach(tb => {
                     const el = document.getElementById(`tab-${tb}`);
-                    if(el) {
-                        el.className = tb === b ? 'flex-1 px-4 py-2 tab-active btn-taktil text-sm whitespace-nowrap' : 'flex-1 px-4 py-2 tab-inactive btn-taktil text-sm whitespace-nowrap';
-                    }
+                    if(el) el.className = tb === b ? 'flex-1 px-4 py-2 tab-active btn-taktil text-sm whitespace-nowrap shadow-sm' : 'flex-1 px-4 py-2 tab-inactive btn-taktil text-sm whitespace-nowrap';
                 });
                 
                 const ongkir = document.getElementById('f-ongkir');
@@ -391,29 +381,41 @@
             },
 
             async fetchData() {
-                this.toggleLoader(true, 'Ambil Data...');
+                this.toggleLoader(true, 'Menarik Data Realtime...');
                 try {
                     const res = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'get_dashboard' }) });
                     const data = await res.json();
                     
-                    // Filter pintar untuk memisahkan hasil Merge Node
-                    STATE.priceList = data.filter(i => i.durasi_paket_arena !== undefined);
+                    // Filter Logika Ketat untuk menghindari duplikasi Merge Node n8n
+                    STATE.priceList = data.filter(i => i.durasi_paket_arena !== undefined && i.durasi_paket_arena !== null && i.paket_arena !== 'null');
                     STATE.logs = data.filter(i => i.status_unit_arena !== undefined && i.is_active !== false);
                     STATE.expenses = data.filter(i => i.jumlah_pengeluaran_arena !== undefined);
 
-                    // Isi Dropdown Master Paket Bersih
-                    const sel = document.getElementById('f-paket');
-                    if(sel) {
-                        sel.innerHTML = '<option value="">Pilih Paket Master</option>';
-                        STATE.priceList.forEach(p => {
-                            sel.innerHTML += `<option value="${p.paket_arena}" data-price="${p.tagihan_paket_arena}">${p.paket_arena} (${p.durasi_paket_arena} Jam)</option>`;
-                        });
-                    }
-
+                    this.populatePackages();
                     this.renderUI();
+                    
                     if(STATE.masterTimer) clearInterval(STATE.masterTimer);
-                    STATE.masterTimer = setInterval(() => this.updateTimers(), 30000); // Tiap 30 dtk
+                    STATE.masterTimer = setInterval(() => this.updateTimers(), 30000); 
                 } catch(e) { console.error(e); } finally { this.toggleLoader(false); }
+            },
+
+            populatePackages() {
+                const select = document.getElementById('f-paket');
+                if(!select) return;
+                
+                // Deduplikasi Nama Paket (Solusi untuk bug n8n)
+                const uniquePackages = [];
+                const seen = new Set();
+                STATE.priceList.forEach(p => {
+                    if (p.paket_arena && p.durasi_paket_arena && !seen.has(p.paket_arena)) {
+                        seen.add(p.paket_arena); uniquePackages.push(p);
+                    }
+                });
+
+                select.innerHTML = '<option value="">Pilih Paket Bermain</option>';
+                uniquePackages.forEach(p => {
+                    select.innerHTML += `<option value="${p.paket_arena}" data-price="${p.tagihan_paket_arena}">${p.paket_arena} (${p.durasi_paket_arena} Jam)</option>`;
+                });
             },
 
             calculatePrice() {
@@ -422,25 +424,22 @@
                 if(opt && opt.dataset.price) document.getElementById('f-price').value = opt.dataset.price;
             },
 
-            // FITUR: Quick Extend via Form
             quickExtend(unit, cName, cWa) {
                 document.getElementById('f-unit').value = unit;
                 document.getElementById('f-name').value = cName;
                 document.getElementById('f-wa').value = cWa;
                 document.getElementById('f-paket').focus();
-                alert("Silakan pilih paket tambahan dan klik Simpan. Sistem akan membuat order terpisah untuk perpanjangan.");
+                alert("Silakan pilih paket EXTEND dan klik Simpan. Sistem akan membuat riwayat tagihan tambahan.");
             },
 
             renderUI() {
                 const now = new Date();
-                const bLog = STATE.user.role === 'shareholder' ? STATE.logs.filter(l => l.cabang_arena === STATE.activeBranch) : STATE.logs;
                 const todayStr = now.toISOString().split('T')[0];
                 
-                // Active rentals (not finished/cancelled) to filter dropdown unit
                 const activeRentals = STATE.logs.filter(l => l.status_unit_arena === 'booked' || l.status_unit_arena === 'playing');
                 const activeUnitNums = activeRentals.map(l => parseInt(l.unit_arena));
 
-                // 1. RENDER UNIT GRID & DROPDOWN (Admin)
+                // 1. RENDER UNIT (Sembunyikan yg sedang dipakai dari Dropdown)
                 if(STATE.user.role !== 'shareholder') {
                     const uGrid = document.getElementById('unit-grid');
                     const uSel = document.getElementById('f-unit');
@@ -448,33 +447,32 @@
                     
                     CONFIG.BRANCHES[STATE.activeBranch].forEach(u => {
                         const isBusy = activeUnitNums.includes(u);
-                        // Build Visual
-                        uGrid.innerHTML += `<div id="u-card-${u}" class="glass apple-card p-3 text-center border ${isBusy ? 'opacity-50' : ''}">
-                            <span class="text-[10px] text-gray-400 font-semibold">UNIT</span>
-                            <span class="text-xl font-bold block">${u}</span>
-                            <span id="u-status-${u}" class="text-[9px] uppercase font-bold text-green-500">Ready</span>
+                        uGrid.innerHTML += `<div id="u-card-${u}" class="glass apple-card p-3 text-center border ${isBusy ? 'opacity-40 bg-gray-50' : 'border-blue-200'}">
+                            <span class="text-[10px] text-gray-500 font-bold">UNIT</span>
+                            <span class="text-xl font-black block">${u}</span>
+                            <span id="u-status-${u}" class="text-[9px] uppercase font-bold text-green-500 tracking-wider">Ready</span>
                         </div>`;
-                        // Populate Dropdown ONLY if Ready
                         if(!isBusy) uSel.innerHTML += `<option value="${u}">Unit ${u}</option>`;
                     });
                 }
 
-                // 2. RENDER LOGS (Local View for ops)
+                // 2. RENDER LOGS UI (Revamp Sesuai Instruksi)
                 const logList = document.getElementById('log-list');
                 logList.innerHTML = '';
                 let kasirShift = 0;
-                let activeCount = 0;
 
-                // Batasi log Admin hanya H-0 dan H-1
                 const opsLogs = STATE.logs.filter(l => {
                     if(l.cabang_arena !== STATE.activeBranch) return false;
                     if(STATE.user.role === 'admin') {
                         const lDate = l.jam_mulai_sewa ? l.jam_mulai_sewa.substring(0,10) : '';
                         const dateDiff = Math.floor((now - new Date(lDate)) / (1000*60*60*24));
-                        return dateDiff <= 1 || l.status_unit_arena === 'playing'; // Tampilkan yg masih main
+                        return dateDiff <= 1 || l.status_unit_arena === 'playing'; 
                     }
                     return true;
                 });
+
+                // Urutkan yang main di atas
+                opsLogs.sort((a,b) => new Date(b.jam_mulai_sewa) - new Date(a.jam_mulai_sewa));
 
                 opsLogs.forEach(l => {
                     const isToday = l.jam_mulai_sewa && l.jam_mulai_sewa.includes(todayStr);
@@ -482,80 +480,84 @@
                         kasirShift += Number(l.tagihan_arena || 0);
                     }
 
-                    // Update grid visual status
+                    // Update grid status
                     const sEl = document.getElementById(`u-status-${l.unit_arena}`);
                     const cEl = document.getElementById(`u-card-${l.unit_arena}`);
                     if(sEl && (l.status_unit_arena === 'booked' || l.status_unit_arena === 'playing')) {
                         sEl.innerText = l.status_unit_arena;
-                        sEl.className = l.status_unit_arena === 'booked' ? 'text-[9px] uppercase font-bold text-orange-500' : 'text-[9px] uppercase font-bold text-blue-500';
-                        cEl.classList.remove('opacity-50');
+                        sEl.className = l.status_unit_arena === 'booked' ? 'text-[9px] uppercase font-extrabold text-orange-500 tracking-wider' : 'text-[9px] uppercase font-extrabold text-blue-600 tracking-wider';
                         cEl.classList.add(l.status_unit_arena === 'booked' ? 'border-orange-400' : 'border-blue-500', 'bg-white');
                     }
 
-                    if(l.status_unit_arena === 'playing') activeCount++;
-
-                    // Render Card Log
                     const pkg = STATE.priceList.find(p => p.paket_arena === l.paket_arena);
-                    const dur = pkg ? (Number(pkg.durasi_paket_arena)*60) : 0;
+                    const durMins = pkg ? (parseFloat(pkg.durasi_paket_arena)*60) : 0;
+                    const jamSewaStr = l.jam_mulai_sewa && l.jam_mulai_sewa.length > 15 ? l.jam_mulai_sewa.substring(11,16) : '-';
                     
-                    let btns = '';
+                    // Tombol Lunas / Belum
+                    const isLunas = l.pembayaran === 'Lunas';
+                    const payBtn = `<button onclick="APP.togglePayment('${l.id}', '${l.pembayaran}')" class="text-[10px] font-bold px-2.5 py-1 rounded shadow-sm btn-taktil ${isLunas ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'} border ${isLunas ? 'border-green-200':'border-red-200'}">${isLunas ? '🟢 LUNAS' : '🔴 BELUM'}</button>`;
+
+                    // Action Buttons
+                    let btns = ''; let delBtn = '';
                     if(STATE.user.role !== 'shareholder') {
-                        if(l.status_unit_arena === 'booked') btns = `<button onclick="APP.changeStatus('${l.id}','playing')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold btn-taktil shadow-sm">Main</button><button onclick="APP.changeStatus('${l.id}','cancelled')" class="bg-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold btn-taktil">Batal</button>`;
-                        else if(l.status_unit_arena === 'playing') btns = `<button onclick="APP.changeStatus('${l.id}','finished')" class="bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold btn-taktil shadow-sm">Selesai</button> <button onclick="APP.quickExtend('${l.unit_arena}','${l.nama_pelanggan_arena}','${l.nomor_pelanggan_arena}')" class="bg-blue-50 text-blue-600 px-2 py-1.5 rounded-lg text-xs font-bold btn-taktil">+ Waktu</button>`;
+                        if(l.status_unit_arena === 'booked') btns = `<button onclick="APP.changeStatus('${l.id}','playing')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold btn-taktil shadow-sm">Mulai</button><button onclick="APP.changeStatus('${l.id}','cancelled')" class="bg-gray-200 px-3 py-1.5 rounded-lg text-[11px] font-bold btn-taktil text-gray-700">Batal</button>`;
+                        else if(l.status_unit_arena === 'playing') btns = `<button onclick="APP.changeStatus('${l.id}','finished')" class="bg-black text-white px-3 py-1.5 rounded-lg text-[11px] font-bold btn-taktil shadow-sm">Selesai</button> <button onclick="APP.quickExtend('${l.unit_arena}','${l.nama_pelanggan_arena}','${l.nomor_pelanggan_arena}')" class="bg-blue-50 text-blue-600 px-2 py-1.5 rounded-lg text-[11px] font-bold btn-taktil">+ Waktu</button>`;
+                        
+                        if(STATE.user.role === 'manager') {
+                            delBtn = `<button onclick="APP.changeStatus('${l.id}','deleted')" class="text-[10px] font-bold text-red-400 mt-2 hover:underline">Hapus Log</button>`;
+                        }
                     }
 
+                    let statColor = l.status_unit_arena === 'playing' ? 'bg-blue-100 text-blue-700' : (l.status_unit_arena === 'booked' ? 'bg-orange-100 text-orange-700' : 'bg-gray-200 text-gray-600');
+
+                    // Struktur Log Order Baru (Sesuai Permintaan)
                     logList.innerHTML += `
-                        <div class="p-3 bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100 text-sm">
-                            <div class="flex justify-between">
+                        <div class="p-3.5 bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 transition-all hover:border-blue-200">
+                            <div class="flex justify-between items-start">
                                 <div>
-                                    <p class="font-bold text-gray-900">U-${l.unit_arena} <span class="text-xs text-gray-500 font-normal">(${l.paket_arena})</span></p>
-                                    <p class="text-xs text-gray-600 truncate max-w-[140px]">${l.nama_pelanggan_arena}</p>
-                                    <p class="text-[10px] font-bold uppercase mt-1 ${l.status_unit_arena === 'playing' ? 'text-blue-600' : 'text-gray-500'}">${l.status_unit_arena}</p>
-                                    <div class="text-[11px] mt-1 timer-display" data-wa="${l.nomor_pelanggan_arena}" data-status="${l.status_unit_arena}" data-start="${l.jam_mulai_sewa}" data-dur="${dur}"></div>
+                                    <p class="font-extrabold text-gray-900 text-base mb-0.5">${jamSewaStr} — ${l.nama_pelanggan_arena}</p>
+                                    <p class="text-[13px] text-gray-600 font-semibold mb-1.5">U-${l.unit_arena} • ${l.paket_arena}</p>
+                                    <div class="flex gap-2 items-center">
+                                        <span class="text-[9px] uppercase font-bold px-2 py-0.5 rounded ${statColor}">${l.status_unit_arena}</span>
+                                        <span class="timer-display text-[11px] font-bold" data-wa="${l.nomor_pelanggan_arena}" data-status="${l.status_unit_arena}" data-start="${l.jam_mulai_sewa}" data-dur="${durMins}"></span>
+                                    </div>
                                 </div>
-                                <div class="flex flex-col items-end gap-1.5">
-                                    <p class="font-bold text-gray-800">${this.fmtRp(l.tagihan_arena)}</p>
-                                    <div class="flex gap-1">${btns}</div>
+                                <div class="text-right flex flex-col items-end gap-1.5">
+                                    <p class="font-black text-blue-600 text-lg leading-none">${this.fmtRp(l.tagihan_arena)}</p>
+                                    ${payBtn}
+                                    <div class="flex gap-1 mt-1">${btns}</div>
                                 </div>
                             </div>
+                            <div class="text-right">${delBtn}</div>
                         </div>`;
                 });
 
                 document.getElementById('a-kasir').innerText = this.fmtRp(kasirShift);
-                document.getElementById('live-count').innerText = activeCount;
 
-                // 3. KALKULASI GLOBAL (Manager & Owner)
+                // 3. KALKULASI DASHBOARD OWNER & MANAGER
                 if(STATE.user.role === 'manager' || STATE.user.role === 'shareholder') {
-                    let oGlobal = 0, oHari = 0, oBulan = 0, expBulan = 0;
+                    let oHari = 0, oBulan = 0, expBulan = 0;
                     let freqMap = {}, hoursMap = {};
                     
                     STATE.logs.forEach(l => {
                         if(l.status_unit_arena !== 'cancelled' && l.status_unit_arena !== 'deleted') {
                             const tag = Number(l.tagihan_arena || 0);
-                            oGlobal += tag;
-                            
                             const d = l.jam_mulai_sewa || '';
                             if(d.includes(todayStr)) oHari += tag;
-                            if(d.startsWith(todayStr.substring(0,7))) oBulan += tag; // Match YYYY-MM
+                            if(d.startsWith(todayStr.substring(0,7))) oBulan += tag; 
                             
-                            // Analytics Owner
                             if(l.paket_arena) freqMap[l.paket_arena] = (freqMap[l.paket_arena] || 0) + 1;
-                            if(d.length > 13) {
-                                const h = d.substring(11,13);
-                                hoursMap[h] = (hoursMap[h] || 0) + 1;
-                            }
+                            if(d.length > 13) { const h = d.substring(11,13); hoursMap[h] = (hoursMap[h] || 0) + 1; }
                         }
                     });
 
                     STATE.expenses.forEach(e => {
-                        if(e.tanggal_pengeluaran_arena && e.tanggal_pengeluaran_arena.startsWith(todayStr.substring(0,7))) {
-                            expBulan += Number(e.jumlah_pengeluaran_arena || 0);
-                        }
+                        if(e.tanggal_pengeluaran_arena && e.tanggal_pengeluaran_arena.startsWith(todayStr.substring(0,7))) expBulan += Number(e.jumlah_pengeluaran_arena || 0);
                     });
 
                     document.getElementById('m-omset-hari').innerText = this.fmtRp(oHari);
                     document.getElementById('m-omset-bulan').innerText = this.fmtRp(oBulan);
-                    document.getElementById('m-net-profit').innerText = this.fmtRp(oBulan - expBulan);
+                    if(document.getElementById('m-net-profit')) document.getElementById('m-net-profit').innerText = this.fmtRp(oBulan - expBulan);
 
                     if(STATE.user.role === 'shareholder') {
                         let topPkg = Object.keys(freqMap).reduce((a, b) => freqMap[a] > freqMap[b] ? a : b, '-');
@@ -564,14 +566,13 @@
                         
                         document.getElementById('c-top-pkg').innerText = topPkg;
                         document.getElementById('c-peak-hour').innerText = peakH ? `${peakH}:00 - ${parseInt(peakH)+1}:00` : '-';
-                        document.getElementById('c-peak-day').innerText = "Sabtu"; // Simulasi Statis, butuh lib tgl kompleks
+                        document.getElementById('c-peak-day').innerText = "Sabtu"; 
                         document.getElementById('c-avg-ticket').innerText = totalTrx > 0 ? this.fmtRp(oBulan / totalTrx) : 'Rp 0';
-                        
                         this.renderChart();
                     }
                 }
 
-                // 4. TOP 10 PELANGGAN & WA BLAST
+                // 4. TOP 10 PELANGGAN
                 const cstMap = {};
                 STATE.logs.forEach(l => {
                     if(l.cabang_arena === STATE.activeBranch && l.nomor_pelanggan_arena) {
@@ -588,21 +589,18 @@
                 topCst.forEach((c, idx) => {
                     const msg = encodeURIComponent(`Halo Kak ${c.name}, terima kasih udah sering main di Playbox! Khusus hari ini ada diskon potongan 10 ribu untuk transaksi minimal 40k. Ditunggu kedatangannya ya!`);
                     tcEl.innerHTML += `
-                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100">
-                            <div><span class="font-bold text-gray-500 mr-2">#${idx+1}</span><span class="font-bold text-gray-800">${c.name}</span> <span class="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded ml-1">${c.count}x Main</span></div>
-                            <a href="https://wa.me/${c.wa}?text=${msg}" target="_blank" class="bg-green-500 hover:bg-green-600 text-white p-1.5 rounded-lg flex items-center gap-1 btn-taktil"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg><span class="text-[10px] font-bold">Promo</span></a>
+                        <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                            <div><span class="font-black text-gray-400 w-5 inline-block">#${idx+1}</span><span class="font-bold text-gray-800">${c.name}</span> <span class="text-[10px] font-bold bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded ml-1">${c.count}x</span></div>
+                            <a href="https://wa.me/${c.wa}?text=${msg}" target="_blank" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded-lg flex items-center gap-1 btn-taktil shadow-sm"><span class="text-[10px] font-bold">Kirim Promo</span></a>
                         </div>`;
                 });
 
                 this.updateTimers();
             },
 
-            // FITUR: Grafik Owner
             renderChart() {
                 const ctx = document.getElementById('orderChart');
                 if(!ctx) return;
-                
-                // Kalkulasi hari 1-30 bulan ini
                 const filterMonth = new Date().toISOString().substring(0,7);
                 const dailyData = {};
                 for(let i=1; i<=31; i++) dailyData[`${filterMonth}-${String(i).padStart(2,'0')}`] = 0;
@@ -615,39 +613,36 @@
                 if(STATE.chartInstance) STATE.chartInstance.destroy();
                 STATE.chartInstance = new Chart(ctx, {
                     type: 'line',
-                    data: {
-                        labels: Object.keys(dailyData).map(d => d.split('-')[2]),
-                        datasets: [{ label: 'Jumlah Order', data: Object.values(dailyData), borderColor: '#007aff', backgroundColor: 'rgba(0,122,255,0.1)', tension: 0.4, fill: true }]
-                    },
+                    data: { labels: Object.keys(dailyData).map(d => d.split('-')[2]), datasets: [{ label: 'Order', data: Object.values(dailyData), borderColor: '#007aff', backgroundColor: 'rgba(0,122,255,0.1)', tension: 0.4, fill: true, borderWidth: 3, pointRadius: 0 }] },
                     options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
                 });
             },
 
-            // VIEW: Render Master Logs
             renderMasterLogs() {
                 const mFilter = document.getElementById('filter-month').value;
                 const tbody = document.getElementById('master-log-body');
                 tbody.innerHTML = '';
                 
                 let filtered = STATE.logs.filter(l => l.jam_mulai_sewa && l.jam_mulai_sewa.startsWith(mFilter));
-                // Urutkan terbaru
                 filtered.sort((a,b) => new Date(b.jam_mulai_sewa) - new Date(a.jam_mulai_sewa));
 
                 filtered.forEach(l => {
-                    const statColor = l.status_unit_arena === 'cancelled' ? 'text-red-500' : 'text-green-600';
+                    const paySt = l.pembayaran === 'Lunas' ? 'text-green-600' : 'text-red-500';
                     tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-3">${l.jam_mulai_sewa}</td>
-                            <td class="py-3">${l.cabang_arena || '-'}</td>
-                            <td class="py-3 font-medium">${l.nama_pelanggan_arena} <br><span class="text-[10px] font-normal text-gray-500">${l.nomor_pelanggan_arena}</span></td>
-                            <td class="py-3">U-${l.unit_arena} (${l.paket_arena}) <br><span class="text-[10px] ${statColor} font-bold uppercase">${l.status_unit_arena}</span></td>
-                            <td class="py-3 text-right font-bold">${this.fmtRp(l.tagihan_arena)}</td>
+                        <tr class="hover:bg-gray-50 border-b border-gray-100">
+                            <td class="py-3 text-gray-600">${l.jam_mulai_sewa}</td>
+                            <td class="py-3 font-bold">${l.cabang_arena || '-'}</td>
+                            <td class="py-3 font-bold">${l.nama_pelanggan_arena}</td>
+                            <td class="py-3 text-gray-700">U-${l.unit_arena} (${l.paket_arena})</td>
+                            <td class="py-3 text-right">
+                                <span class="font-bold block text-base">${this.fmtRp(l.tagihan_arena)}</span>
+                                <span class="text-[10px] font-bold uppercase ${paySt}">${l.pembayaran || 'Belum'}</span>
+                            </td>
                         </tr>
                     `;
                 });
             },
 
-            // VIEW: Render Expenses
             renderExpenses() {
                 const list = document.getElementById('expense-list');
                 const mFilter = new Date().toISOString().substring(0,7);
@@ -659,9 +654,9 @@
                 exps.forEach(e => {
                     tot += Number(e.jumlah_pengeluaran_arena);
                     list.innerHTML += `
-                        <div class="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
-                            <div><p class="font-semibold text-gray-800">${e.pengeluaran_arena}</p><p class="text-[10px] text-gray-500">${e.tanggal_pengeluaran_arena} • Cabang ${e.cabang_id_arena}</p></div>
-                            <p class="font-bold text-red-600">-${this.fmtRp(e.jumlah_pengeluaran_arena)}</p>
+                        <div class="flex justify-between items-center py-2.5 border-b border-gray-100 border-dashed">
+                            <div><p class="font-bold text-gray-800">${e.pengeluaran_arena}</p><p class="text-[11px] text-gray-500 font-medium">${e.tanggal_pengeluaran_arena} • Cabang ${e.cabang_id_arena}</p></div>
+                            <p class="font-black text-red-600 text-base">-${this.fmtRp(e.jumlah_pengeluaran_arena)}</p>
                         </div>
                     `;
                 });
@@ -671,14 +666,19 @@
             // Eksekusi Server
             async submitRental() {
                 const unit = document.getElementById('f-unit').value;
+                const jamInput = document.getElementById('f-jam').value;
+                const menitInput = document.getElementById('f-menit').value;
+                
                 const p = {
                     action: 'input_rental', admin_name: STATE.user.name, branch: this.getBranchByUnit(unit),
                     unit: unit, paket: document.getElementById('f-paket').value, price: document.getElementById('f-price').value,
                     ongkir: document.getElementById('f-ongkir').value || 0, name: document.getElementById('f-name').value.trim(),
-                    wa: document.getElementById('f-wa').value.trim(), status_unit: 'booked',
-                    jam_mulai_sewa: `${new Date().toISOString().split('T')[0]} ${document.getElementById('f-jam').value}:${document.getElementById('f-menit').value}:00`
+                    wa: document.getElementById('f-wa').value.trim(), 
+                    status_unit: 'booked', 
+                    pembayaran: 'Belum', // Kolom baru
+                    jam_mulai_sewa: `${new Date().toISOString().split('T')[0]} ${jamInput}:${menitInput}:00`
                 };
-                if(!p.name || !p.wa || !p.unit || !p.paket || !p.price || p.jam_mulai_sewa.includes(':undefined')) return alert("Lengkapi form!");
+                if(!p.name || !p.wa || !p.unit || !p.paket || !p.price || !jamInput) return alert("Pastikan form lengkap!");
 
                 this.toggleLoader(true, 'Menyimpan Order...');
                 try {
@@ -705,58 +705,61 @@
 
             async changeStatus(id, stat) {
                 if(stat === 'deleted' && !confirm("Yakin hapus permanen log ini?")) return;
+                const log = STATE.logs.find(l => l.id === id);
                 this.toggleLoader(true, 'Update Status...');
                 try {
-                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'update_status', row_id: id, status_unit: stat }) });
+                    // Kirim status unit dan status pembayaran saat ini agar tidak null
+                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'update_status', row_id: id, status_unit: stat, pembayaran: log.pembayaran || 'Belum' }) });
                     await this.fetchData();
                 } catch(e) { alert('Gagal Update'); } finally { this.toggleLoader(false); }
             },
 
-            // Download PDF menggunakan html2pdf
+            async togglePayment(id, currentStat) {
+                const newStat = currentStat === 'Lunas' ? 'Belum' : 'Lunas';
+                const log = STATE.logs.find(l => l.id === id);
+                this.toggleLoader(true, 'Mengubah Status Bayar...');
+                try {
+                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'update_status', row_id: id, status_unit: log.status_unit_arena, pembayaran: newStat }) });
+                    await this.fetchData();
+                } catch(e) { alert('Gagal Update Pembayaran'); } finally { this.toggleLoader(false); }
+            },
+
             downloadPDF(elementId, fileName) {
                 const element = document.getElementById(elementId);
                 const kop = document.getElementById('kop-log');
-                if(kop) {
-                    kop.classList.remove('hidden');
-                    document.getElementById('kop-log-date').innerText = `Periode: ${document.getElementById('filter-month').value}`;
-                }
+                if(kop) { kop.classList.remove('hidden'); document.getElementById('kop-log-date').innerText = `Periode: ${document.getElementById('filter-month').value}`; }
                 
-                const opt = {
-                    margin: 0.5, filename: `${fileName}_${new Date().getTime()}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-                };
-                html2pdf().set(opt).from(element).save().then(() => {
-                    if(kop) kop.classList.add('hidden');
-                });
+                const opt = { margin: 0.5, filename: `${fileName}_${new Date().getTime()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
+                html2pdf().set(opt).from(element).save().then(() => { if(kop) kop.classList.add('hidden'); });
             },
 
             updateTimers() {
                 const now = new Date();
                 document.querySelectorAll('.timer-display').forEach(el => {
                     const st = el.dataset.status;
-                    if(st === 'finished' || st === 'cancelled') { el.innerText = ''; return; }
+                    if(st === 'finished' || st === 'cancelled' || st === 'deleted') { el.innerText = ''; return; }
                     
-                    const dur = parseInt(el.dataset.dur) || 0;
-                    if(dur === 0) { el.innerText = '• No Limit'; el.className = "text-[10px] text-gray-400 mt-1 font-medium"; return; }
+                    const durMins = parseInt(el.dataset.dur) || 0;
+                    if(durMins === 0) { el.innerText = '• Unlimited'; el.className = "text-[10px] text-gray-500 mt-1 font-bold tracking-wider"; return; }
 
-                    const start = new Date(el.dataset.start); // Karena format sdh YYYY-MM-DD HH:mm:ss
+                    const startStr = el.dataset.start.replace(' ', 'T'); // Fix Safari Date Parsing
+                    const start = new Date(startStr);
                     if(isNaN(start.getTime())) return;
                     
                     let target = new Date(start.getTime());
-                    target.setMinutes(target.getMinutes() + dur);
+                    target.setMinutes(target.getMinutes() + durMins);
                     
                     const diffMins = Math.floor((target - now) / 60000);
                     
                     if(diffMins <= 0) {
-                        el.innerText = "🚨 WAKTU HABIS!"; el.className = "text-[11px] warn-red mt-1 timer-display";
-                        const waBtn = `<a href="https://wa.me/${this.formatWA(el.dataset.wa)}?text=ijin%20abangku%2C%20kami%20mau%20kasi%20tau%20kalau%20durasi%20udah%20abis%20ya.." target="_blank" class="bg-red-100 text-red-600 px-2 py-1 rounded text-[10px] btn-taktil ml-2">Tagih WA</a>`;
-                        if(!el.innerHTML.includes('Tagih WA')) el.innerHTML += waBtn;
+                        el.innerText = "🚨 HABIS!"; el.className = "text-[11px] warn-red mt-1 timer-display tracking-wider";
+                        const waBtn = `<a href="https://wa.me/${this.formatWA(el.dataset.wa)}?text=ijin%20abangku%2C%20kami%20mau%20kasi%20tau%20kalau%20durasi%20udah%20abis%20ya.." target="_blank" class="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[9px] btn-taktil ml-2">TAGIH WA</a>`;
+                        if(!el.innerHTML.includes('TAGIH WA')) el.innerHTML += waBtn;
                     } else if(diffMins <= 10) {
-                        el.innerText = `⏳ Sisa: ${diffMins}m`; el.className = "text-[11px] warn-yellow mt-1 timer-display";
+                        el.innerText = `⏳ ${diffMins} mnt lagi`; el.className = "text-[11px] text-orange-500 font-bold mt-1 timer-display";
                     } else {
                         const h = Math.floor(diffMins/60); const m = diffMins%60;
-                        el.innerText = `Sisa: ${h}j ${m}m`; el.className = "text-[11px] text-gray-500 font-semibold mt-1 timer-display";
+                        el.innerText = `⏳ ${h}j ${m}m`; el.className = "text-[11px] text-gray-500 font-bold mt-1 timer-display";
                     }
                 });
             }
