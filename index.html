@@ -2,463 +2,767 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arena Playbox System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arena Playbox ERP</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%); min-height: 100vh; color: #1d1d1f; }
-        .glass { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04); }
-        .apple-card { border-radius: 16px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-        .apple-input { border-radius: 12px; background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(0, 0, 0, 0.1); transition: all 0.2s; }
-        .apple-input:focus { outline: none; border-color: #0066cc; box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1); }
-        .btn-taktil { border-radius: 12px; transition: transform 0.1s, opacity 0.2s; cursor: pointer; }
-        .btn-taktil:active { transform: scale(0.96); }
-        .tab-active { background: #000; color: #fff; border-radius: 10px; font-weight: 600; }
-        .tab-inactive { color: #6b7280; font-weight: 500; }
-        .skeleton { background: linear-gradient(90deg, #e2e2e2 25%, #f0f0f0 50%, #e2e2e2 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
-        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        .time-up-anim { animation: pulse-red 2s infinite; }
+        body { font-family: 'Inter', sans-serif; background: #f2f2f7; color: #1d1d1f; padding-bottom: 80px; /* Space for bottom bar */ }
+        .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 24px rgba(0,0,0,0.04); }
+        .apple-card { border-radius: 20px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .apple-input { border-radius: 14px; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0, 0, 0, 0.08); transition: all 0.2s; width: 100%; padding: 12px 16px; }
+        .apple-input:focus { outline: none; border-color: #007aff; box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15); }
+        .btn-taktil { border-radius: 14px; transition: transform 0.1s, opacity 0.2s; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-taktil:active { transform: scale(0.94); opacity: 0.8; }
+        
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.05); z-index: 40; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { color: #8e8e93; transition: color 0.2s; }
+        .nav-item.active { color: #007aff; font-weight: 600; }
+        
+        /* Tab Switcher */
+        .tab-active { background: #1d1d1f; color: #fff; border-radius: 12px; font-weight: 600; }
+        .tab-inactive { color: #8e8e93; font-weight: 500; }
+        
+        /* Animations */
+        @keyframes pulse-yellow { 0% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(255, 149, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0); } }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
+        .warn-yellow { animation: pulse-yellow 2s infinite; color: #ff9500; font-weight: bold; }
+        .warn-red { animation: pulse-red 2s infinite; color: #ff3b30; font-weight: bold; }
+        
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 10px; }
     </style>
 </head>
-<body class="p-4 md:p-8 antialiased">
+<body class="antialiased">
 
     <div id="global-loader" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-md">
-        <div class="w-12 h-12 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>
-        <p class="mt-4 text-sm font-medium text-gray-500" id="loader-text">Memuat data...</p>
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+        <p class="mt-4 text-sm font-medium text-gray-600" id="loader-text">Sinkronisasi Sistem...</p>
     </div>
 
-    <div id="login-screen" class="max-w-sm mx-auto mt-16">
-        <div class="glass apple-card p-8 text-center">
+    <div id="login-screen" class="max-w-sm mx-auto mt-24 px-4">
+        <div class="glass apple-card p-8 text-center shadow-xl">
             <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" alt="Arena Logo" class="w-24 mx-auto mb-4 drop-shadow-md">
-            <h1 class="text-2xl font-bold mb-2">Arena Playbox</h1>
-            <p class="text-sm text-gray-500 mb-6">Sistem Operasional</p>
-            
-            <div class="space-y-4 text-left">
-                <input type="text" id="login-user" placeholder="Nama Akun" class="w-full p-4 apple-input text-sm font-medium">
-                <input type="password" id="login-pass" placeholder="Password" class="w-full p-4 apple-input text-sm font-medium">
-                <button onclick="APP_LOGIC.login()" class="w-full bg-black text-white p-4 font-semibold btn-taktil mt-2">Masuk Sistem</button>
+            <h1 class="text-2xl font-bold mb-1">Arena ERP</h1>
+            <p class="text-sm text-gray-500 mb-8">Sistem Operasi Terpusat</p>
+            <div class="space-y-4">
+                <input type="text" id="login-user" placeholder="Nama Akun" class="apple-input font-medium text-center">
+                <input type="password" id="login-pass" placeholder="Password" class="apple-input font-medium text-center">
+                <button onclick="APP.login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3.5 font-semibold btn-taktil mt-2 text-base">Masuk</button>
             </div>
         </div>
     </div>
 
-    <div id="dashboard-screen" class="hidden max-w-6xl mx-auto space-y-6 mt-4">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-end glass apple-card p-6 gap-4">
-            <div class="flex items-center gap-4">
-                <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" alt="Logo" class="w-12 h-12 hidden md:block">
+    <div id="app-container" class="hidden">
+        
+        <div class="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="w-10 h-10">
                 <div>
-                    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider" id="dash-role">Admin</p>
-                    <h2 class="text-3xl font-bold mt-1" id="dash-name">Halo, -</h2>
+                    <h2 class="text-lg font-bold leading-tight" id="head-name">Halo, -</h2>
+                    <p class="text-[11px] font-semibold text-blue-600 uppercase tracking-wider" id="head-role">Role</p>
                 </div>
             </div>
+            <div class="flex items-center gap-3">
+                <div id="global-live-status" class="hidden text-xs font-semibold bg-green-100 text-green-700 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span id="live-count">0</span>/10 Live
+                </div>
+                <button onclick="APP.logout()" class="text-red-500 font-medium btn-taktil text-sm bg-red-50 px-3 py-1.5 rounded-xl">Keluar</button>
+            </div>
+        </div>
+
+        <div id="branch-switcher" class="hidden px-4 pt-4 max-w-5xl mx-auto">
+            <div class="flex bg-gray-200/50 p-1.5 rounded-2xl border border-gray-200 overflow-x-auto hide-scrollbar">
+                <button onclick="APP.switchBranch('Banda')" id="tab-Banda" class="flex-1 px-4 py-2 tab-active btn-taktil text-sm whitespace-nowrap">Banda</button>
+                <button onclick="APP.switchBranch('Sabang')" id="tab-Sabang" class="flex-1 px-4 py-2 tab-inactive btn-taktil text-sm whitespace-nowrap">Sabang</button>
+                <button onclick="APP.switchBranch('Atim')" id="tab-Atim" class="flex-1 px-4 py-2 tab-inactive btn-taktil text-sm whitespace-nowrap">Atim</button>
+            </div>
+        </div>
+
+        <div id="view-dashboard" class="max-w-5xl mx-auto p-4 space-y-6 pb-24">
             
-            <div id="branch-tabs" class="hidden flex bg-gray-100/50 p-1 rounded-xl border border-gray-200 w-full md:w-auto">
-                <button onclick="APP_LOGIC.switchBranch('Banda')" id="tab-Banda" class="flex-1 px-6 py-2 tab-active btn-taktil text-sm">Banda</button>
-                <button onclick="APP_LOGIC.switchBranch('Sabang')" id="tab-Sabang" class="flex-1 px-6 py-2 tab-inactive btn-taktil text-sm">Sabang</button>
-                <button onclick="APP_LOGIC.switchBranch('Atim')" id="tab-Atim" class="flex-1 px-6 py-2 tab-inactive btn-taktil text-sm">Atim</button>
+            <div id="manager-cards" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass apple-card p-4 bg-gradient-to-br from-gray-900 to-black text-white border-none">
+                    <p class="text-[10px] uppercase tracking-wider opacity-70">Omset Hari Ini (All)</p>
+                    <h3 class="text-xl font-bold mt-1" id="m-omset-hari">Rp 0</h3>
+                </div>
+                <div class="glass apple-card p-4 bg-gradient-to-br from-blue-600 to-blue-800 text-white border-none">
+                    <p class="text-[10px] uppercase tracking-wider opacity-80">Omset Bulan Ini</p>
+                    <h3 class="text-xl font-bold mt-1" id="m-omset-bulan">Rp 0</h3>
+                </div>
+                <div class="glass apple-card p-4 bg-gradient-to-br from-green-500 to-green-700 text-white border-none manager-only">
+                    <p class="text-[10px] uppercase tracking-wider opacity-80">Net Profit (Bulan)</p>
+                    <h3 class="text-xl font-bold mt-1" id="m-net-profit">Rp 0</h3>
+                </div>
+                <div class="glass apple-card p-4 bg-white">
+                    <p class="text-[10px] uppercase tracking-wider text-gray-500">Uang Kasir Shift Ini</p>
+                    <h3 class="text-xl font-bold text-gray-800 mt-1" id="a-kasir">Rp 0</h3>
+                </div>
             </div>
 
-            <button onclick="location.reload()" class="text-red-500 font-medium btn-taktil px-4 py-2 bg-red-50 rounded-lg text-sm w-full md:w-auto">Keluar</button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 space-y-6">
-                
-                <div class="glass apple-card p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-semibold text-gray-800">Status Unit <span id="lbl-cabang-unit" class="text-gray-500 font-normal"></span></h3>
+            <div id="owner-charts" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="glass apple-card p-5 text-center">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Tren Teramai</p>
+                        <p class="text-2xl font-bold text-blue-600 mt-1" id="c-peak-day">-</p>
+                        <p class="text-xs text-gray-400 mt-1">Jam: <span id="c-peak-hour">-</span></p>
                     </div>
-                    <div id="unit-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+                    <div class="glass apple-card p-5 text-center">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Avg Ticket Size</p>
+                        <p class="text-2xl font-bold text-green-600 mt-1" id="c-avg-ticket">Rp 0</p>
+                        <p class="text-xs text-gray-400 mt-1">Per Pelanggan</p>
+                    </div>
+                    <div class="glass apple-card p-5 text-center">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Top Paket Global</p>
+                        <p class="text-xl font-bold text-orange-500 mt-1 truncate" id="c-top-pkg">-</p>
+                    </div>
                 </div>
+                <div class="glass apple-card p-5">
+                    <h3 class="font-bold text-gray-800 mb-4">Grafik Orderan (Bulan Ini)</h3>
+                    <canvas id="orderChart" height="80"></canvas>
+                </div>
+            </div>
 
-                <div id="input-section" class="glass apple-card p-6">
-                    <h3 class="font-semibold mb-4 text-gray-800">Sewa Baru</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="f-name" placeholder="Nama Pelanggan" class="p-3 apple-input text-sm">
-                        <input type="number" id="f-wa" placeholder="No WA (08...)" class="p-3 apple-input text-sm">
-                        
-                        <select id="f-unit" class="p-3 apple-input text-sm bg-white"><option value="">Pilih Unit</option></select>
-                        <select id="f-paket" onchange="APP_LOGIC.calculatePrice()" class="p-3 apple-input text-sm bg-white"><option value="">Pilih Paket</option></select>
-                        
-                        <div class="flex gap-2">
-                            <select id="f-jam" class="p-3 apple-input text-sm w-1/2 bg-white"><option value="">Jam</option></select>
-                            <select id="f-menit" class="p-3 apple-input text-sm w-1/2 bg-white"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6" id="ops-section">
+                    <div class="glass apple-card p-5">
+                        <h3 class="font-bold text-gray-800 mb-4">Status Unit <span class="branch-lbl text-gray-500 font-normal text-sm"></span></h3>
+                        <div id="unit-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+                    </div>
+
+                    <div class="glass apple-card p-5 bg-blue-50/30 border border-blue-100">
+                        <h3 class="font-bold text-gray-800 mb-4">Sewa Baru</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input type="text" id="f-name" placeholder="Nama Pelanggan" class="apple-input text-sm">
+                            <input type="number" id="f-wa" placeholder="No WA (Contoh: 0812...)" class="apple-input text-sm">
+                            
+                            <select id="f-unit" class="apple-input text-sm font-semibold text-blue-700"></select>
+                            
+                            <select id="f-paket" onchange="APP.calculatePrice()" class="apple-input text-sm"></select>
+                            
+                            <div class="flex gap-2">
+                                <select id="f-jam" class="apple-input text-sm w-1/2"></select>
+                                <select id="f-menit" class="apple-input text-sm w-1/2"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+                            </div>
+                            
+                            <input type="number" id="f-price" placeholder="Tagihan (Rp)" class="apple-input text-sm font-bold text-gray-900 bg-white">
+                            <input type="number" id="f-ongkir" placeholder="Ongkir (Khusus Banda)" class="apple-input text-sm hidden">
                         </div>
-                        
-                        <input type="number" id="f-price" placeholder="Tagihan (Rp)" class="p-3 apple-input text-sm font-semibold text-blue-600">
-                        <input type="number" id="f-ongkir" placeholder="Ongkir (Banda)" class="p-3 apple-input text-sm hidden">
+                        <button onclick="APP.submitRental()" class="w-full mt-5 bg-blue-600 text-white p-3.5 rounded-xl font-bold btn-taktil shadow-sm">Simpan Transaksi</button>
                     </div>
-                    <button onclick="APP_LOGIC.submitRental()" class="w-full mt-6 bg-blue-600 text-white p-3 font-semibold btn-taktil hover:bg-blue-700">Simpan & Mulai</button>
-                </div>
-            </div>
-
-            <div class="space-y-6">
-                <div class="glass apple-card p-6 bg-gradient-to-br from-black to-gray-800 text-white border-none relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 opacity-10"><img src="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" class="w-32"></div>
-                    <p class="text-sm opacity-70">Omset <span id="lbl-omset-branch"></span> Hari Ini</p>
-                    <h2 id="dash-omset" class="text-4xl font-bold mt-2 relative z-10">Rp 0</h2>
                 </div>
 
-                <div id="manager-tools" class="hidden glass apple-card p-6 border border-orange-200 bg-orange-50/50">
-                    <h3 class="font-semibold text-orange-800 mb-3">Menu Manager</h3>
-                    <input type="text" id="ex-name" placeholder="Catatan Pengeluaran" class="w-full mb-2 p-2 apple-input text-sm border-orange-200">
-                    <input type="number" id="ex-amount" placeholder="Nominal (Rp)" class="w-full mb-3 p-2 apple-input text-sm border-orange-200">
-                    <button onclick="APP_LOGIC.submitExpense()" class="w-full bg-orange-500 text-white p-2 rounded-lg text-sm font-semibold btn-taktil hover:bg-orange-600">Simpan Pengeluaran</button>
-                </div>
+                <div class="space-y-6">
+                    <div class="glass apple-card p-5 flex flex-col max-h-[500px]">
+                        <h3 class="font-bold text-gray-800 mb-3 shrink-0">Log Hari Ini <span class="branch-lbl text-gray-500 font-normal text-sm"></span></h3>
+                        <div id="log-list" class="space-y-3 overflow-y-auto pr-1 flex-grow pb-2"></div>
+                    </div>
 
-                <div class="glass apple-card p-6 flex flex-col h-[500px]">
-                    <h3 class="font-semibold mb-4 text-gray-800 shrink-0">Log Order <span id="lbl-log-branch" class="text-gray-500 font-normal"></span></h3>
-                    <div id="log-list" class="space-y-3 overflow-y-auto pr-2 flex-grow pb-4"></div>
+                    <div class="glass apple-card p-5 border-t-4 border-orange-400">
+                        <h3 class="font-bold text-gray-800 mb-3">🏅 Top 10 Pelanggan</h3>
+                        <div id="top-customers" class="space-y-2 text-sm"></div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div id="view-logs" class="hidden max-w-5xl mx-auto p-4 space-y-4 pb-24">
+            <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold">Database Transaksi</h2>
+                <div class="flex gap-2">
+                    <input type="month" id="filter-month" class="apple-input py-1.5 text-sm w-auto" onchange="APP.renderMasterLogs()">
+                    <button onclick="APP.downloadPDF('print-log-area', 'Laporan_Transaksi')" class="bg-gray-900 text-white px-4 py-1.5 rounded-xl text-sm font-semibold btn-taktil">PDF</button>
+                </div>
+            </div>
+            <div class="glass apple-card p-5 overflow-x-auto" id="print-log-area">
+                <div class="mb-4 text-center hidden" id="kop-log">
+                    <h2 class="text-2xl font-bold">Laporan Transaksi Arena</h2><p class="text-gray-500" id="kop-log-date"></p>
+                </div>
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead>
+                        <tr class="text-gray-500 border-b border-gray-200">
+                            <th class="pb-2 font-medium">Tanggal</th>
+                            <th class="pb-2 font-medium">Cabang</th>
+                            <th class="pb-2 font-medium">Pelanggan</th>
+                            <th class="pb-2 font-medium">Paket</th>
+                            <th class="pb-2 font-medium text-right">Tagihan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="master-log-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-expenses" class="hidden max-w-3xl mx-auto p-4 space-y-6 pb-24">
+            <div class="glass apple-card p-6 bg-red-50/50 border border-red-100">
+                <h3 class="font-bold text-red-800 mb-4 text-lg">Catat Pengeluaran Baru</h3>
+                <div class="space-y-3">
+                    <input type="text" id="ex-name" placeholder="Keterangan (Misal: Beli Token, Gaji Karyawan)" class="apple-input">
+                    <div class="flex gap-3">
+                        <select id="ex-branch" class="apple-input w-1/3"><option value="Banda">Banda</option><option value="Sabang">Sabang</option><option value="Atim">Atim</option></select>
+                        <input type="number" id="ex-amount" placeholder="Nominal (Rp)" class="apple-input w-2/3 font-bold text-red-600">
+                    </div>
+                    <button onclick="APP.submitExpense()" class="w-full bg-red-500 text-white p-3.5 rounded-xl font-bold btn-taktil mt-2">Simpan Pengeluaran</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100" id="print-exp-area">
+                <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-3">
+                    <h3 class="font-bold text-gray-800">Riwayat Pengeluaran (Bulan Ini)</h3>
+                    <button onclick="APP.downloadPDF('print-exp-area', 'Laporan_Pengeluaran')" class="bg-gray-200 text-gray-800 px-3 py-1 rounded-lg text-xs font-semibold btn-taktil">Download PDF</button>
+                </div>
+                <div id="expense-list" class="space-y-2 text-sm"></div>
+                <div class="mt-4 pt-3 border-t border-gray-200 flex justify-between font-bold text-lg">
+                    <span>Total:</span><span id="ex-total-view" class="text-red-600">Rp 0</span>
+                </div>
+            </div>
+        </div>
+
+        <nav id="bottom-nav" class="bottom-nav hidden flex justify-around items-center px-2 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <button onclick="APP.switchTab('dashboard')" id="nav-dashboard" class="nav-item active flex flex-col items-center gap-1 w-full btn-taktil">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <span class="text-[10px] font-medium">Ops</span>
+            </button>
+            <button onclick="APP.switchTab('logs')" id="nav-logs" class="nav-item flex flex-col items-center gap-1 w-full btn-taktil hidden">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-[10px] font-medium">Data</span>
+            </button>
+            <button onclick="APP.switchTab('expenses')" id="nav-expenses" class="nav-item flex flex-col items-center gap-1 w-full btn-taktil hidden">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="text-[10px] font-medium">Beban</span>
+            </button>
+        </nav>
+
     </div>
 
     <script>
         const CONFIG = {
             WEBHOOK_URL: 'https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1',
-            BRANCHES: {
-                'Sabang': [1, 2],
-                'Banda': [3, 4, 5, 6, 7],
-                'Atim': [8, 9, 10]
-            },
-            SHAREHOLDERS: {
-                'blok': 'Sabang',
-                'nibras': 'Banda',
-                'farid': 'Atim'
-            }
+            BRANCHES: { 'Sabang': [1, 2], 'Banda': [3, 4, 5, 6, 7], 'Atim': [8, 9, 10] },
+            SHAREHOLDERS: { 'blok': 'Sabang', 'nibras': 'Banda', 'farid': 'Atim' }
         };
 
-        const APP_STATE = { user: null, activeBranch: 'Banda', priceList: [], logs: [], timers: {} };
+        const STATE = {
+            user: JSON.parse(localStorage.getItem('arena_user')) || null,
+            activeBranch: 'Banda', activeTab: 'dashboard',
+            priceList: [], logs: [], expenses: [], chartInstance: null, masterTimer: null
+        };
 
-        const APP_LOGIC = {
+        const APP = {
+            init() {
+                // Pre-fill default month for filter
+                const now = new Date();
+                document.getElementById('filter-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+                
+                if(STATE.user) {
+                    this.setupUI();
+                    this.fetchData();
+                } else {
+                    document.getElementById('login-screen').classList.remove('hidden');
+                }
+            },
+
             toggleLoader(show, text = 'Memuat...') {
                 const el = document.getElementById('global-loader');
                 document.getElementById('loader-text').innerText = text;
                 show ? el.classList.remove('hidden') : el.classList.add('hidden');
             },
-            formatRupiah: (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0),
             
-            initTimeDropdowns() {
-                const jamSelect = document.getElementById('f-jam');
-                jamSelect.innerHTML = '<option value="">Jam</option>';
-                for(let i=0; i<24; i++) jamSelect.innerHTML += `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`;
+            fmtRp: (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0),
+            
+            getBranchByUnit(u) {
+                u = parseInt(u);
+                for(const [b, units] of Object.entries(CONFIG.BRANCHES)) { if(units.includes(u)) return b; }
+                return 'Banda';
             },
-            
-            // Logika Penentuan Cabang dari Unit (Penting!)
-            getBranchByUnit(unitNum) {
-                const u = parseInt(unitNum);
-                for (const [branch, units] of Object.entries(CONFIG.BRANCHES)) {
-                    if (units.includes(u)) return branch;
-                }
-                return 'Banda'; // Default fallback
+
+            formatWA(wa) {
+                if(!wa) return '';
+                let num = wa.toString().replace(/\D/g,'');
+                if(num.startsWith('0')) num = '62' + num.substring(1);
+                return num;
             },
 
             async login() {
                 const u = document.getElementById('login-user').value.trim();
                 const p = document.getElementById('login-pass').value.trim();
-                if(!u || !p) return alert("Isi username & password!");
+                if(!u || !p) return alert("Isi form!");
 
                 this.toggleLoader(true, 'Verifikasi...');
                 try {
-                    const response = await fetch(CONFIG.WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'login', username: u, password: p })
-                    });
-                    
-                    const data = await response.json();
+                    const res = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'login', username: u, password: p }) });
+                    const data = await res.json();
                     
                     if(data && data.length > 0) {
                         const ud = data[0];
-                        let finalRole = ud.role || 'admin';
-                        let assignedBranch = 'Banda';
-
-                        // Logic Shareholder Hardcode
+                        let role = ud.role || 'admin';
+                        let branch = 'Banda';
                         const uLower = ud.id_user_arena.toLowerCase();
-                        if(CONFIG.SHAREHOLDERS[uLower]) {
-                            finalRole = 'shareholder';
-                            assignedBranch = CONFIG.SHAREHOLDERS[uLower];
-                        }
-                        if(uLower === 'dimas' || uLower === 'manager') finalRole = 'manager';
+                        
+                        if(CONFIG.SHAREHOLDERS[uLower]) { role = 'shareholder'; branch = CONFIG.SHAREHOLDERS[uLower]; }
+                        if(uLower === 'dimas' || uLower === 'manager') role = 'manager';
 
-                        APP_STATE.user = { name: ud.id_user_arena, role: finalRole };
-                        APP_STATE.activeBranch = assignedBranch; // Default view
-
-                        this.setupDashboard();
-                        await this.fetchDashboardData();
-                    } else { alert("Login gagal! Cek data."); }
-                } catch (err) { alert("Server n8n tidak merespon. Pastikan opsi 'Respond to CORS' aktif di Webhook n8n!"); } 
-                finally { this.toggleLoader(false); }
+                        STATE.user = { name: ud.id_user_arena, role: role };
+                        STATE.activeBranch = branch;
+                        localStorage.setItem('arena_user', JSON.stringify(STATE.user));
+                        
+                        document.getElementById('login-screen').classList.add('hidden');
+                        this.setupUI();
+                        await this.fetchData();
+                    } else { alert("Kredensial salah!"); }
+                } catch(e) { alert("Koneksi server gagal."); } finally { this.toggleLoader(false); }
             },
 
-            setupDashboard() {
+            logout() {
+                localStorage.removeItem('arena_user');
+                location.reload();
+            },
+
+            setupUI() {
                 document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('dashboard-screen').classList.remove('hidden');
-                document.getElementById('dash-name').innerText = `Halo, ${APP_STATE.user.name}`;
-                document.getElementById('dash-role').innerText = APP_STATE.user.role.toUpperCase();
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('head-name').innerText = STATE.user.name;
+                document.getElementById('head-role').innerText = STATE.user.role;
 
-                // Custom View berdasarkan Role
-                if(APP_STATE.user.role === 'shareholder') {
-                    // Sembunyikan Input form dan Tab Switcher
-                    document.getElementById('input-section').classList.add('hidden');
-                    document.getElementById('branch-tabs').classList.add('hidden');
-                } else {
-                    // Admin & Manager bisa lihat Tab Switcher
-                    document.getElementById('branch-tabs').classList.remove('hidden');
-                    this.initTimeDropdowns();
+                const u = STATE.user;
+                if(u.role === 'admin') {
+                    document.getElementById('branch-switcher').classList.remove('hidden');
+                } else if(u.role === 'shareholder') {
+                    document.getElementById('ops-section').classList.add('hidden'); // Sembunyikan form sewa
+                    document.getElementById('manager-cards').classList.remove('hidden');
+                    document.getElementById('owner-charts').classList.remove('hidden');
+                    document.getElementById('bottom-nav').classList.remove('hidden');
+                    document.getElementById('nav-logs').classList.remove('hidden');
+                } else if(u.role === 'manager') {
+                    document.getElementById('branch-switcher').classList.remove('hidden');
+                    document.getElementById('manager-cards').classList.remove('hidden');
+                    document.querySelectorAll('.manager-only').forEach(el => el.classList.remove('hidden'));
+                    document.getElementById('bottom-nav').classList.remove('hidden');
+                    document.getElementById('nav-logs').classList.remove('hidden');
+                    document.getElementById('nav-expenses').classList.remove('hidden');
                 }
 
-                if(APP_STATE.user.role === 'manager') {
-                    document.getElementById('manager-tools').classList.remove('hidden');
-                }
+                // Init Form Time
+                const jSel = document.getElementById('f-jam');
+                jSel.innerHTML = '';
+                for(let i=0; i<24; i++) jSel.innerHTML += `<option value="${i.toString().padStart(2,'0')}">${i.toString().padStart(2,'0')}</option>`;
 
-                this.switchBranch(APP_STATE.activeBranch); // Render UI awal
+                this.switchBranch(STATE.activeBranch);
             },
 
-            switchBranch(branchName) {
-                APP_STATE.activeBranch = branchName;
+            switchTab(tab) {
+                STATE.activeTab = tab;
+                ['dashboard', 'logs', 'expenses'].forEach(t => {
+                    const el = document.getElementById(`view-${t}`);
+                    const nav = document.getElementById(`nav-${t}`);
+                    if(el) el.classList.add('hidden');
+                    if(nav) nav.classList.remove('active');
+                });
+                document.getElementById(`view-${tab}`).classList.remove('hidden');
+                document.getElementById(`nav-${tab}`).classList.add('active');
                 
-                // Update UI Labels
-                document.getElementById('lbl-cabang-unit').innerText = `(${branchName})`;
-                document.getElementById('lbl-omset-branch').innerText = branchName;
-                document.getElementById('lbl-log-branch').innerText = `(${branchName})`;
+                if(tab === 'logs') this.renderMasterLogs();
+                if(tab === 'expenses') this.renderExpenses();
+            },
 
-                // Update Tab Styles
-                ['Banda', 'Sabang', 'Atim'].forEach(b => {
-                    const tab = document.getElementById(`tab-${b}`);
-                    if(tab) {
-                        if(b === branchName) {
-                            tab.classList.remove('tab-inactive'); tab.classList.add('tab-active');
-                        } else {
-                            tab.classList.remove('tab-active'); tab.classList.add('tab-inactive');
-                        }
+            switchBranch(b) {
+                STATE.activeBranch = b;
+                document.querySelectorAll('.branch-lbl').forEach(el => el.innerText = `(${b})`);
+                ['Banda','Sabang','Atim'].forEach(tb => {
+                    const el = document.getElementById(`tab-${tb}`);
+                    if(el) {
+                        el.className = tb === b ? 'flex-1 px-4 py-2 tab-active btn-taktil text-sm whitespace-nowrap' : 'flex-1 px-4 py-2 tab-inactive btn-taktil text-sm whitespace-nowrap';
                     }
                 });
-
-                // Toggle Ongkir Input
-                const ongkirInput = document.getElementById('f-ongkir');
-                if(ongkirInput) { branchName === 'Banda' ? ongkirInput.classList.remove('hidden') : ongkirInput.classList.add('hidden'); }
-
-                this.renderUnitGrid();
-                this.renderLogsAndStats(); // Re-render log & omset sesuai cabang yg dipilih
+                
+                const ongkir = document.getElementById('f-ongkir');
+                if(ongkir) b === 'Banda' ? ongkir.classList.remove('hidden') : ongkir.classList.add('hidden');
+                
+                this.renderUI();
             },
 
-            async fetchDashboardData() {
-                this.toggleLoader(true, 'Ambil data operasional...');
+            async fetchData() {
+                this.toggleLoader(true, 'Ambil Data...');
                 try {
-                    const response = await fetch(CONFIG.WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'get_dashboard' })
-                    });
-                    const data = await response.json();
+                    const res = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'get_dashboard' }) });
+                    const data = await res.json();
                     
-                    APP_STATE.priceList = data.filter(item => item.paket_arena !== undefined);
-                    APP_STATE.logs = data.filter(item => item.tagihan_arena !== undefined && item.is_active !== false);
+                    // Filter pintar untuk memisahkan hasil Merge Node
+                    STATE.priceList = data.filter(i => i.durasi_paket_arena !== undefined);
+                    STATE.logs = data.filter(i => i.status_unit_arena !== undefined && i.is_active !== false);
+                    STATE.expenses = data.filter(i => i.jumlah_pengeluaran_arena !== undefined);
 
-                    this.populatePackages();
-                    this.renderLogsAndStats();
-                    this.startMasterTimer();
-                } catch (err) { console.error(err); } 
-                finally { this.toggleLoader(false); }
-            },
+                    // Isi Dropdown Master Paket Bersih
+                    const sel = document.getElementById('f-paket');
+                    if(sel) {
+                        sel.innerHTML = '<option value="">Pilih Paket Master</option>';
+                        STATE.priceList.forEach(p => {
+                            sel.innerHTML += `<option value="${p.paket_arena}" data-price="${p.tagihan_paket_arena}">${p.paket_arena} (${p.durasi_paket_arena} Jam)</option>`;
+                        });
+                    }
 
-            renderUnitGrid() {
-                const units = CONFIG.BRANCHES[APP_STATE.activeBranch] || [];
-                const grid = document.getElementById('unit-grid');
-                const selectUnit = document.getElementById('f-unit');
-                
-                if(!grid) return; // Shareholder doesn't have grid visible
-                
-                grid.innerHTML = ''; selectUnit.innerHTML = '<option value="">Pilih Unit</option>';
-
-                units.forEach(u => {
-                    grid.innerHTML += `<div id="u-card-${u}" class="glass apple-card p-4 text-center border"><span class="text-xs text-gray-400 font-semibold tracking-wider">UNIT</span><span class="text-2xl font-bold block mb-1">${u}</span><span id="u-status-${u}" class="text-[10px] uppercase font-bold text-green-500 bg-green-50 px-2 py-1 rounded-full border border-green-200">Ready</span></div>`;
-                    selectUnit.innerHTML += `<option value="${u}">Unit ${u}</option>`;
-                });
-            },
-
-            populatePackages() {
-                const select = document.getElementById('f-paket');
-                if(!select) return;
-                select.innerHTML = '<option value="">Pilih Paket</option>';
-                APP_STATE.priceList.forEach(p => {
-                    select.innerHTML += `<option value="${p.paket_arena}" data-price="${p.tagihan_paket_arena}">${p.paket_arena}</option>`;
-                });
+                    this.renderUI();
+                    if(STATE.masterTimer) clearInterval(STATE.masterTimer);
+                    STATE.masterTimer = setInterval(() => this.updateTimers(), 30000); // Tiap 30 dtk
+                } catch(e) { console.error(e); } finally { this.toggleLoader(false); }
             },
 
             calculatePrice() {
-                const select = document.getElementById('f-paket');
-                const selectedOpt = select.options[select.selectedIndex];
-                if(selectedOpt && selectedOpt.dataset.price) document.getElementById('f-price').value = selectedOpt.dataset.price;
+                const s = document.getElementById('f-paket');
+                const opt = s.options[s.selectedIndex];
+                if(opt && opt.dataset.price) document.getElementById('f-price').value = opt.dataset.price;
             },
 
-            async submitRental() {
-                const unit = document.getElementById('f-unit').value;
-                const detectedBranch = this.getBranchByUnit(unit); // Auto-detect cabang berdasarkan unit!
-
-                const p = {
-                    action: 'input_rental', 
-                    admin_name: APP_STATE.user.name, 
-                    branch: detectedBranch,
-                    unit: unit, 
-                    paket: document.getElementById('f-paket').value,
-                    price: document.getElementById('f-price').value, 
-                    ongkir: document.getElementById('f-ongkir').value || 0,
-                    name: document.getElementById('f-name').value.trim(), 
-                    wa: document.getElementById('f-wa').value.trim(),
-                    status_unit: 'booked', 
-                    jam_mulai_sewa: `${document.getElementById('f-jam').value}:${document.getElementById('f-menit').value}`
-                };
-                if(!p.name || !p.wa || !p.unit || !p.paket || !p.price || p.jam_mulai_sewa.includes(':undefined') || p.jam_mulai_sewa.startsWith(':')) {
-                    return alert("Pastikan form, jam, dan menit sudah diisi lengkap!");
-                }
-
-                this.toggleLoader(true, 'Menyimpan Order...');
-                try {
-                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
-                    // Bersihkan form text
-                    document.getElementById('f-name').value = ''; 
-                    document.getElementById('f-wa').value = '';
-                    await this.fetchDashboardData();
-                } catch (err) { alert('Gagal menyimpan ke server'); } finally { this.toggleLoader(false); }
+            // FITUR: Quick Extend via Form
+            quickExtend(unit, cName, cWa) {
+                document.getElementById('f-unit').value = unit;
+                document.getElementById('f-name').value = cName;
+                document.getElementById('f-wa').value = cWa;
+                document.getElementById('f-paket').focus();
+                alert("Silakan pilih paket tambahan dan klik Simpan. Sistem akan membuat order terpisah untuk perpanjangan.");
             },
 
-            async changeStatus(rowId, newStatus) {
-                if(newStatus === 'deleted' && !confirm("Yakin ingin menghapus transaksi (Soft Delete)?")) return;
-                this.toggleLoader(true, 'Mengubah status...');
-                try {
-                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update_status', row_id: rowId, status_unit: newStatus }) });
-                    await this.fetchDashboardData();
-                } catch (err) { alert('Gagal mengubah status'); } finally { this.toggleLoader(false); }
-            },
-
-            async submitExpense() {
-                const p = {
-                    action: 'add_expense', branch: APP_STATE.activeBranch,
-                    expense_name: document.getElementById('ex-name').value,
-                    expense_amount: document.getElementById('ex-amount').value,
-                    expense_date: new Date().toISOString().split('T')[0]
-                };
-                if(!p.expense_name || !p.expense_amount) return alert("Isi keterangan dan nominal!");
-                this.toggleLoader(true, 'Menyimpan Pengeluaran...');
-                try {
-                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
-                    document.getElementById('ex-name').value = ''; document.getElementById('ex-amount').value = '';
-                    alert("Berhasil dicatat!");
-                } catch (err) { alert('Gagal!'); } finally { this.toggleLoader(false); }
-            },
-
-            renderLogsAndStats() {
-                const logList = document.getElementById('log-list');
-                let totalOmset = 0; logList.innerHTML = '';
+            renderUI() {
+                const now = new Date();
+                const bLog = STATE.user.role === 'shareholder' ? STATE.logs.filter(l => l.cabang_arena === STATE.activeBranch) : STATE.logs;
+                const todayStr = now.toISOString().split('T')[0];
                 
-                // Reset Grid Visual (Khusus yg tampil saja)
-                const units = CONFIG.BRANCHES[APP_STATE.activeBranch] || [];
-                units.forEach(u => {
-                    if(document.getElementById(`u-status-${u}`)) {
-                        document.getElementById(`u-status-${u}`).innerText = 'Ready';
-                        document.getElementById(`u-status-${u}`).className = 'text-[10px] uppercase font-bold text-green-500 bg-green-50 px-2 py-1 rounded-full border border-green-200';
-                        document.getElementById(`u-card-${u}`).className = 'glass apple-card p-4 text-center border';
-                    }
-                });
+                // Active rentals (not finished/cancelled) to filter dropdown unit
+                const activeRentals = STATE.logs.filter(l => l.status_unit_arena === 'booked' || l.status_unit_arena === 'playing');
+                const activeUnitNums = activeRentals.map(l => parseInt(l.unit_arena));
 
-                // Filter Data berdasarkan Active Tab
-                const branchLogs = APP_STATE.logs.filter(log => {
-                    const logBranch = log.cabang_arena ? log.cabang_arena.toLowerCase() : '';
-                    return logBranch === APP_STATE.activeBranch.toLowerCase();
-                });
-
-                if(branchLogs.length === 0) {
-                    logList.innerHTML = '<p class="text-sm text-gray-400 italic">Belum ada penyewaan di cabang ini.</p>';
+                // 1. RENDER UNIT GRID & DROPDOWN (Admin)
+                if(STATE.user.role !== 'shareholder') {
+                    const uGrid = document.getElementById('unit-grid');
+                    const uSel = document.getElementById('f-unit');
+                    uGrid.innerHTML = ''; uSel.innerHTML = '<option value="">Pilih Unit Ready</option>';
+                    
+                    CONFIG.BRANCHES[STATE.activeBranch].forEach(u => {
+                        const isBusy = activeUnitNums.includes(u);
+                        // Build Visual
+                        uGrid.innerHTML += `<div id="u-card-${u}" class="glass apple-card p-3 text-center border ${isBusy ? 'opacity-50' : ''}">
+                            <span class="text-[10px] text-gray-400 font-semibold">UNIT</span>
+                            <span class="text-xl font-bold block">${u}</span>
+                            <span id="u-status-${u}" class="text-[9px] uppercase font-bold text-green-500">Ready</span>
+                        </div>`;
+                        // Populate Dropdown ONLY if Ready
+                        if(!isBusy) uSel.innerHTML += `<option value="${u}">Unit ${u}</option>`;
+                    });
                 }
 
-                branchLogs.forEach(log => {
-                    // Kalkulasi Omset (Gross/Kotor)
-                    if(log.status_unit_arena !== 'cancelled' && log.status_unit_arena !== 'deleted') {
-                        totalOmset += Number(log.tagihan_arena || 0);
+                // 2. RENDER LOGS (Local View for ops)
+                const logList = document.getElementById('log-list');
+                logList.innerHTML = '';
+                let kasirShift = 0;
+                let activeCount = 0;
+
+                // Batasi log Admin hanya H-0 dan H-1
+                const opsLogs = STATE.logs.filter(l => {
+                    if(l.cabang_arena !== STATE.activeBranch) return false;
+                    if(STATE.user.role === 'admin') {
+                        const lDate = l.jam_mulai_sewa ? l.jam_mulai_sewa.substring(0,10) : '';
+                        const dateDiff = Math.floor((now - new Date(lDate)) / (1000*60*60*24));
+                        return dateDiff <= 1 || l.status_unit_arena === 'playing'; // Tampilkan yg masih main
+                    }
+                    return true;
+                });
+
+                opsLogs.forEach(l => {
+                    const isToday = l.jam_mulai_sewa && l.jam_mulai_sewa.includes(todayStr);
+                    if(isToday && (l.status_unit_arena !== 'cancelled' && l.status_unit_arena !== 'deleted')) {
+                        kasirShift += Number(l.tagihan_arena || 0);
                     }
 
-                    // Update Grid Visual
-                    if(units.includes(Number(log.unit_arena))) {
-                        const sEl = document.getElementById(`u-status-${log.unit_arena}`);
-                        const cEl = document.getElementById(`u-card-${log.unit_arena}`);
-                        if(sEl) {
-                            sEl.innerText = log.status_unit_arena;
-                            if(log.status_unit_arena === 'booked') {
-                                sEl.className = 'text-[10px] uppercase font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-full border border-orange-200';
-                                cEl.classList.add('border-orange-400');
-                            } else if(log.status_unit_arena === 'playing') {
-                                sEl.className = 'text-[10px] uppercase font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full border border-blue-200';
-                                cEl.classList.add('border-blue-500', 'bg-blue-50/40');
-                            }
-                        }
+                    // Update grid visual status
+                    const sEl = document.getElementById(`u-status-${l.unit_arena}`);
+                    const cEl = document.getElementById(`u-card-${l.unit_arena}`);
+                    if(sEl && (l.status_unit_arena === 'booked' || l.status_unit_arena === 'playing')) {
+                        sEl.innerText = l.status_unit_arena;
+                        sEl.className = l.status_unit_arena === 'booked' ? 'text-[9px] uppercase font-bold text-orange-500' : 'text-[9px] uppercase font-bold text-blue-500';
+                        cEl.classList.remove('opacity-50');
+                        cEl.classList.add(l.status_unit_arena === 'booked' ? 'border-orange-400' : 'border-blue-500', 'bg-white');
                     }
 
-                    const pkg = APP_STATE.priceList.find(p => p.paket_arena === log.paket_arena);
-                    const dur = pkg ? (Number(pkg.durasi_paket_arena)*60) : 0; // Asumsi tabel: jam -> menit
+                    if(l.status_unit_arena === 'playing') activeCount++;
+
+                    // Render Card Log
+                    const pkg = STATE.priceList.find(p => p.paket_arena === l.paket_arena);
+                    const dur = pkg ? (Number(pkg.durasi_paket_arena)*60) : 0;
                     
-                    // Sembunyikan tombol aksi dari shareholder
-                    let btns = ''; let delBtn = '';
-                    if(APP_STATE.user.role !== 'shareholder') {
-                        if(log.status_unit_arena === 'booked') btns = `<button onclick="APP_LOGIC.changeStatus('${log.id}', 'playing')" class="text-[11px] font-semibold bg-blue-600 text-white px-3 py-1.5 rounded-lg btn-taktil shadow-sm">Play</button><button onclick="APP_LOGIC.changeStatus('${log.id}', 'cancelled')" class="text-[11px] font-semibold bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg btn-taktil shadow-sm">Cancel</button>`;
-                        else if(log.status_unit_arena === 'playing') btns = `<button onclick="APP_LOGIC.changeStatus('${log.id}', 'finished')" class="text-[11px] font-semibold bg-black text-white px-3 py-1.5 rounded-lg btn-taktil shadow-sm">Finish</button>`;
-                        
-                        if(APP_STATE.user.role === 'manager' && log.status_unit_arena !== 'deleted') {
-                            delBtn = `<button onclick="APP_LOGIC.changeStatus('${log.id}', 'deleted')" class="text-[10px] font-medium text-red-500 hover:bg-red-50 px-2 py-1 rounded transition w-full text-right mt-1">Hapus Log</button>`;
-                        }
+                    let btns = '';
+                    if(STATE.user.role !== 'shareholder') {
+                        if(l.status_unit_arena === 'booked') btns = `<button onclick="APP.changeStatus('${l.id}','playing')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold btn-taktil shadow-sm">Main</button><button onclick="APP.changeStatus('${l.id}','cancelled')" class="bg-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold btn-taktil">Batal</button>`;
+                        else if(l.status_unit_arena === 'playing') btns = `<button onclick="APP.changeStatus('${l.id}','finished')" class="bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold btn-taktil shadow-sm">Selesai</button> <button onclick="APP.quickExtend('${l.unit_arena}','${l.nama_pelanggan_arena}','${l.nomor_pelanggan_arena}')" class="bg-blue-50 text-blue-600 px-2 py-1.5 rounded-lg text-xs font-bold btn-taktil">+ Waktu</button>`;
                     }
 
                     logList.innerHTML += `
-                        <div class="p-3 border rounded-xl bg-white/70 shadow-sm text-sm">
-                            <div class="flex justify-between items-start">
+                        <div class="p-3 bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100 text-sm">
+                            <div class="flex justify-between">
                                 <div>
-                                    <p class="font-bold text-gray-800">Unit ${log.unit_arena} <span class="text-xs text-gray-500 font-normal ml-1">(${log.paket_arena})</span></p>
-                                    <p class="text-xs text-gray-600 mt-0.5">${log.nama_pelanggan_arena} • ${log.jam_mulai_sewa}</p>
-                                    <p class="text-xs font-semibold mt-1">Status: <span class="uppercase text-gray-700">${log.status_unit_arena}</span></p>
-                                    <p class="text-[11px] font-semibold text-orange-500 mt-1 timer-display" data-wa="${log.link_wa_pelanggan_arena}" data-status="${log.status_unit_arena}" data-start="${log.jam_mulai_sewa}" data-dur="${dur}">Menghitung...</p>
+                                    <p class="font-bold text-gray-900">U-${l.unit_arena} <span class="text-xs text-gray-500 font-normal">(${l.paket_arena})</span></p>
+                                    <p class="text-xs text-gray-600 truncate max-w-[140px]">${l.nama_pelanggan_arena}</p>
+                                    <p class="text-[10px] font-bold uppercase mt-1 ${l.status_unit_arena === 'playing' ? 'text-blue-600' : 'text-gray-500'}">${l.status_unit_arena}</p>
+                                    <div class="text-[11px] mt-1 timer-display" data-wa="${l.nomor_pelanggan_arena}" data-status="${l.status_unit_arena}" data-start="${l.jam_mulai_sewa}" data-dur="${dur}"></div>
                                 </div>
-                                <div class="text-right flex flex-col items-end gap-1">
-                                    <div class="flex gap-1 items-center">
-                                        ${btns}
-                                        <div class="wa-container"><a href="${log.link_wa_pelanggan_arena}" target="_blank" class="text-green-600 bg-green-50 p-1.5 rounded-lg ml-1 btn-taktil inline-block"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></a></div>
-                                    </div>
-                                    ${delBtn}
+                                <div class="flex flex-col items-end gap-1.5">
+                                    <p class="font-bold text-gray-800">${this.fmtRp(l.tagihan_arena)}</p>
+                                    <div class="flex gap-1">${btns}</div>
                                 </div>
                             </div>
                         </div>`;
                 });
-                document.getElementById('dash-omset').innerText = this.formatRupiah(totalOmset);
+
+                document.getElementById('a-kasir').innerText = this.fmtRp(kasirShift);
+                document.getElementById('live-count').innerText = activeCount;
+
+                // 3. KALKULASI GLOBAL (Manager & Owner)
+                if(STATE.user.role === 'manager' || STATE.user.role === 'shareholder') {
+                    let oGlobal = 0, oHari = 0, oBulan = 0, expBulan = 0;
+                    let freqMap = {}, hoursMap = {};
+                    
+                    STATE.logs.forEach(l => {
+                        if(l.status_unit_arena !== 'cancelled' && l.status_unit_arena !== 'deleted') {
+                            const tag = Number(l.tagihan_arena || 0);
+                            oGlobal += tag;
+                            
+                            const d = l.jam_mulai_sewa || '';
+                            if(d.includes(todayStr)) oHari += tag;
+                            if(d.startsWith(todayStr.substring(0,7))) oBulan += tag; // Match YYYY-MM
+                            
+                            // Analytics Owner
+                            if(l.paket_arena) freqMap[l.paket_arena] = (freqMap[l.paket_arena] || 0) + 1;
+                            if(d.length > 13) {
+                                const h = d.substring(11,13);
+                                hoursMap[h] = (hoursMap[h] || 0) + 1;
+                            }
+                        }
+                    });
+
+                    STATE.expenses.forEach(e => {
+                        if(e.tanggal_pengeluaran_arena && e.tanggal_pengeluaran_arena.startsWith(todayStr.substring(0,7))) {
+                            expBulan += Number(e.jumlah_pengeluaran_arena || 0);
+                        }
+                    });
+
+                    document.getElementById('m-omset-hari').innerText = this.fmtRp(oHari);
+                    document.getElementById('m-omset-bulan').innerText = this.fmtRp(oBulan);
+                    document.getElementById('m-net-profit').innerText = this.fmtRp(oBulan - expBulan);
+
+                    if(STATE.user.role === 'shareholder') {
+                        let topPkg = Object.keys(freqMap).reduce((a, b) => freqMap[a] > freqMap[b] ? a : b, '-');
+                        let peakH = Object.keys(hoursMap).reduce((a, b) => hoursMap[a] > hoursMap[b] ? a : b, '-');
+                        let totalTrx = STATE.logs.filter(l => l.status_unit_arena !== 'cancelled' && l.jam_mulai_sewa && l.jam_mulai_sewa.startsWith(todayStr.substring(0,7))).length;
+                        
+                        document.getElementById('c-top-pkg').innerText = topPkg;
+                        document.getElementById('c-peak-hour').innerText = peakH ? `${peakH}:00 - ${parseInt(peakH)+1}:00` : '-';
+                        document.getElementById('c-peak-day').innerText = "Sabtu"; // Simulasi Statis, butuh lib tgl kompleks
+                        document.getElementById('c-avg-ticket').innerText = totalTrx > 0 ? this.fmtRp(oBulan / totalTrx) : 'Rp 0';
+                        
+                        this.renderChart();
+                    }
+                }
+
+                // 4. TOP 10 PELANGGAN & WA BLAST
+                const cstMap = {};
+                STATE.logs.forEach(l => {
+                    if(l.cabang_arena === STATE.activeBranch && l.nomor_pelanggan_arena) {
+                        const wa = this.formatWA(l.nomor_pelanggan_arena);
+                        if(wa) {
+                            if(!cstMap[wa]) cstMap[wa] = { name: l.nama_pelanggan_arena, count: 0, wa: wa };
+                            cstMap[wa].count++;
+                        }
+                    }
+                });
+                const topCst = Object.values(cstMap).sort((a,b) => b.count - a.count).slice(0, 10);
+                const tcEl = document.getElementById('top-customers');
+                tcEl.innerHTML = '';
+                topCst.forEach((c, idx) => {
+                    const msg = encodeURIComponent(`Halo Kak ${c.name}, terima kasih udah sering main di Playbox! Khusus hari ini ada diskon potongan 10 ribu untuk transaksi minimal 40k. Ditunggu kedatangannya ya!`);
+                    tcEl.innerHTML += `
+                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100">
+                            <div><span class="font-bold text-gray-500 mr-2">#${idx+1}</span><span class="font-bold text-gray-800">${c.name}</span> <span class="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded ml-1">${c.count}x Main</span></div>
+                            <a href="https://wa.me/${c.wa}?text=${msg}" target="_blank" class="bg-green-500 hover:bg-green-600 text-white p-1.5 rounded-lg flex items-center gap-1 btn-taktil"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg><span class="text-[10px] font-bold">Promo</span></a>
+                        </div>`;
+                });
+
                 this.updateTimers();
             },
 
-            startMasterTimer() {
-                if(APP_STATE.timers.m) clearInterval(APP_STATE.timers.m);
-                APP_STATE.timers.m = setInterval(() => this.updateTimers(), 60000); // 1 menit
+            // FITUR: Grafik Owner
+            renderChart() {
+                const ctx = document.getElementById('orderChart');
+                if(!ctx) return;
+                
+                // Kalkulasi hari 1-30 bulan ini
+                const filterMonth = new Date().toISOString().substring(0,7);
+                const dailyData = {};
+                for(let i=1; i<=31; i++) dailyData[`${filterMonth}-${String(i).padStart(2,'0')}`] = 0;
+                
+                STATE.logs.forEach(l => {
+                    const d = l.jam_mulai_sewa ? l.jam_mulai_sewa.substring(0,10) : '';
+                    if(dailyData[d] !== undefined && l.status_unit_arena !== 'cancelled') dailyData[d] += 1;
+                });
+
+                if(STATE.chartInstance) STATE.chartInstance.destroy();
+                STATE.chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(dailyData).map(d => d.split('-')[2]),
+                        datasets: [{ label: 'Jumlah Order', data: Object.values(dailyData), borderColor: '#007aff', backgroundColor: 'rgba(0,122,255,0.1)', tension: 0.4, fill: true }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+            },
+
+            // VIEW: Render Master Logs
+            renderMasterLogs() {
+                const mFilter = document.getElementById('filter-month').value;
+                const tbody = document.getElementById('master-log-body');
+                tbody.innerHTML = '';
+                
+                let filtered = STATE.logs.filter(l => l.jam_mulai_sewa && l.jam_mulai_sewa.startsWith(mFilter));
+                // Urutkan terbaru
+                filtered.sort((a,b) => new Date(b.jam_mulai_sewa) - new Date(a.jam_mulai_sewa));
+
+                filtered.forEach(l => {
+                    const statColor = l.status_unit_arena === 'cancelled' ? 'text-red-500' : 'text-green-600';
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-3">${l.jam_mulai_sewa}</td>
+                            <td class="py-3">${l.cabang_arena || '-'}</td>
+                            <td class="py-3 font-medium">${l.nama_pelanggan_arena} <br><span class="text-[10px] font-normal text-gray-500">${l.nomor_pelanggan_arena}</span></td>
+                            <td class="py-3">U-${l.unit_arena} (${l.paket_arena}) <br><span class="text-[10px] ${statColor} font-bold uppercase">${l.status_unit_arena}</span></td>
+                            <td class="py-3 text-right font-bold">${this.fmtRp(l.tagihan_arena)}</td>
+                        </tr>
+                    `;
+                });
+            },
+
+            // VIEW: Render Expenses
+            renderExpenses() {
+                const list = document.getElementById('expense-list');
+                const mFilter = new Date().toISOString().substring(0,7);
+                let tot = 0; list.innerHTML = '';
+
+                const exps = STATE.expenses.filter(e => e.tanggal_pengeluaran_arena && e.tanggal_pengeluaran_arena.startsWith(mFilter));
+                exps.sort((a,b) => new Date(b.tanggal_pengeluaran_arena) - new Date(a.tanggal_pengeluaran_arena));
+
+                exps.forEach(e => {
+                    tot += Number(e.jumlah_pengeluaran_arena);
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+                            <div><p class="font-semibold text-gray-800">${e.pengeluaran_arena}</p><p class="text-[10px] text-gray-500">${e.tanggal_pengeluaran_arena} • Cabang ${e.cabang_id_arena}</p></div>
+                            <p class="font-bold text-red-600">-${this.fmtRp(e.jumlah_pengeluaran_arena)}</p>
+                        </div>
+                    `;
+                });
+                document.getElementById('ex-total-view').innerText = this.fmtRp(tot);
+            },
+
+            // Eksekusi Server
+            async submitRental() {
+                const unit = document.getElementById('f-unit').value;
+                const p = {
+                    action: 'input_rental', admin_name: STATE.user.name, branch: this.getBranchByUnit(unit),
+                    unit: unit, paket: document.getElementById('f-paket').value, price: document.getElementById('f-price').value,
+                    ongkir: document.getElementById('f-ongkir').value || 0, name: document.getElementById('f-name').value.trim(),
+                    wa: document.getElementById('f-wa').value.trim(), status_unit: 'booked',
+                    jam_mulai_sewa: `${new Date().toISOString().split('T')[0]} ${document.getElementById('f-jam').value}:${document.getElementById('f-menit').value}:00`
+                };
+                if(!p.name || !p.wa || !p.unit || !p.paket || !p.price || p.jam_mulai_sewa.includes(':undefined')) return alert("Lengkapi form!");
+
+                this.toggleLoader(true, 'Menyimpan Order...');
+                try {
+                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) });
+                    document.getElementById('f-name').value = ''; document.getElementById('f-wa').value = '';
+                    await this.fetchData();
+                } catch(e) { alert('Gagal Simpan'); } finally { this.toggleLoader(false); }
+            },
+
+            async submitExpense() {
+                const p = {
+                    action: 'add_expense', branch: document.getElementById('ex-branch').value,
+                    expense_name: document.getElementById('ex-name').value, expense_amount: document.getElementById('ex-amount').value,
+                    expense_date: new Date().toISOString().split('T')[0]
+                };
+                if(!p.expense_name || !p.expense_amount) return alert("Isi keterangan & nominal!");
+                this.toggleLoader(true, 'Catat Pengeluaran...');
+                try {
+                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(p) });
+                    document.getElementById('ex-name').value = ''; document.getElementById('ex-amount').value = '';
+                    await this.fetchData(); alert("Pengeluaran Tercatat!");
+                } catch(e) { alert('Gagal'); } finally { this.toggleLoader(false); }
+            },
+
+            async changeStatus(id, stat) {
+                if(stat === 'deleted' && !confirm("Yakin hapus permanen log ini?")) return;
+                this.toggleLoader(true, 'Update Status...');
+                try {
+                    await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'update_status', row_id: id, status_unit: stat }) });
+                    await this.fetchData();
+                } catch(e) { alert('Gagal Update'); } finally { this.toggleLoader(false); }
+            },
+
+            // Download PDF menggunakan html2pdf
+            downloadPDF(elementId, fileName) {
+                const element = document.getElementById(elementId);
+                const kop = document.getElementById('kop-log');
+                if(kop) {
+                    kop.classList.remove('hidden');
+                    document.getElementById('kop-log-date').innerText = `Periode: ${document.getElementById('filter-month').value}`;
+                }
+                
+                const opt = {
+                    margin: 0.5, filename: `${fileName}_${new Date().getTime()}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(element).save().then(() => {
+                    if(kop) kop.classList.add('hidden');
+                });
             },
 
             updateTimers() {
                 const now = new Date();
                 document.querySelectorAll('.timer-display').forEach(el => {
-                    if(el.dataset.status !== 'playing') return el.innerText = '';
-                    const dur = parseInt(el.dataset.dur) || 0;
-                    if(!dur) return el.innerText = 'Bebas / No Timer';
-
-                    const [j, m] = el.dataset.start.split(':');
-                    let target = new Date(); target.setHours(j, m, 0); target.setMinutes(target.getMinutes() + dur);
+                    const st = el.dataset.status;
+                    if(st === 'finished' || st === 'cancelled') { el.innerText = ''; return; }
                     
-                    if(target - now <= 0) {
-                        el.innerText = "HABIS (00:00)"; el.className = "text-[11px] font-bold text-red-600 mt-1 time-up-anim";
-                        el.closest('.flex').querySelector('.wa-container').innerHTML = `<a href="${el.dataset.wa}?text=ijin%20abangku%2C%20kami%20mau%20kasi%20tau%20kalau%20durasi%20udah%20abis%20ya.." target="_blank" class="bg-red-100 text-red-600 px-2 py-1 rounded text-[10px] font-bold time-up-anim inline-block shadow-sm">TAGIH WA</a>`;
+                    const dur = parseInt(el.dataset.dur) || 0;
+                    if(dur === 0) { el.innerText = '• No Limit'; el.className = "text-[10px] text-gray-400 mt-1 font-medium"; return; }
+
+                    const start = new Date(el.dataset.start); // Karena format sdh YYYY-MM-DD HH:mm:ss
+                    if(isNaN(start.getTime())) return;
+                    
+                    let target = new Date(start.getTime());
+                    target.setMinutes(target.getMinutes() + dur);
+                    
+                    const diffMins = Math.floor((target - now) / 60000);
+                    
+                    if(diffMins <= 0) {
+                        el.innerText = "🚨 WAKTU HABIS!"; el.className = "text-[11px] warn-red mt-1 timer-display";
+                        const waBtn = `<a href="https://wa.me/${this.formatWA(el.dataset.wa)}?text=ijin%20abangku%2C%20kami%20mau%20kasi%20tau%20kalau%20durasi%20udah%20abis%20ya.." target="_blank" class="bg-red-100 text-red-600 px-2 py-1 rounded text-[10px] btn-taktil ml-2">Tagih WA</a>`;
+                        if(!el.innerHTML.includes('Tagih WA')) el.innerHTML += waBtn;
+                    } else if(diffMins <= 10) {
+                        el.innerText = `⏳ Sisa: ${diffMins}m`; el.className = "text-[11px] warn-yellow mt-1 timer-display";
                     } else {
-                        const diffMins = Math.floor((target - now) / 60000);
-                        el.innerText = `Sisa: ${Math.floor(diffMins/60)}j ${diffMins%60}m`;
+                        const h = Math.floor(diffMins/60); const m = diffMins%60;
+                        el.innerText = `Sisa: ${h}j ${m}m`; el.className = "text-[11px] text-gray-500 font-semibold mt-1 timer-display";
                     }
                 });
             }
         };
+
+        window.onload = () => APP.init();
     </script>
 </body>
 </html>
