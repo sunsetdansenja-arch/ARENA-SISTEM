@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V3.1 - Integrated App</title>
+    <title>ARENA SYSTEM V3.2 - Dashboard Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +40,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V3.1 | Login Dulu Bos</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V3.2 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -110,7 +110,7 @@
         const APP = {
             init: () => {
                 document.getElementById('form-login').addEventListener('submit', APP.handleLogin);
-                const saved = localStorage.getItem('arena_user_v3');
+                const saved = localStorage.getItem('arena_user_v32');
                 if (saved) { STATE.user = JSON.parse(saved); APP.loadDashboard(); }
             },
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
@@ -166,11 +166,11 @@
                     }
 
                     STATE.user = { username: rawUser.id_user_arena || rawUser.Users || 'User', userType: uType, branch: uBranch };
-                    localStorage.setItem('arena_user_v3', JSON.stringify(STATE.user));
+                    localStorage.setItem('arena_user_v32', JSON.stringify(STATE.user));
                     APP.loadDashboard();
                 } else { alert("❌ Gagal Login. Periksa Username/Password."); }
             },
-            logout: () => { localStorage.removeItem('arena_user_v3'); location.reload(); },
+            logout: () => { localStorage.removeItem('arena_user_v32'); location.reload(); },
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI...');
@@ -207,17 +207,64 @@
                 
                 const container = document.getElementById('main-content');
                 if (tab === 'logs') { container.innerHTML = APP.renderLogsUI(); }
-                else if (tab === 'input') { container.innerHTML = APP.renderInputForm(); APP.updatePrice(); APP.updateUnitOptions(); }
+                else if (tab === 'input') { 
+                    container.innerHTML = APP.renderInputForm(); 
+                    APP.updateUnitOptions(); // Panggil updateUnit dulu biar dropdown Unit ga kosong
+                    APP.updatePrice(); 
+                }
                 else if (tab === 'expense') { container.innerHTML = APP.renderExpenseForm(); }
                 else if (tab === 'report') { container.innerHTML = APP.renderReportTab(); }
+            },
+
+            // --- UI DASHBOARD 9 KOTAK UNIT ---
+            renderUnitBoxes: () => {
+                const todayStr = APP.getTodayStr();
+                const reversedLogs = [...STATE.logs].reverse();
+                let html = '<div class="grid grid-cols-3 gap-2 mb-4">';
+
+                for(let i=1; i<=9; i++) {
+                    let status = 'kosong'; 
+                    // Cari log terbaru hari ini untuk unit nomor i
+                    const latestLog = reversedLogs.find(l => {
+                        const uNum = String(l.unit_arena).replace(/\D/g, ''); // Ekstrak hanya angka dari "Unit 3" / "3"
+                        const dStr = (l.jam_mulai_sewa||'').substring(0,10);
+                        return uNum === String(i) && dStr === todayStr;
+                    });
+
+                    if (latestLog) {
+                        const stat = String(latestLog.status_unit_arena).toLowerCase();
+                        if (stat === 'booked' || stat === 'book') status = 'book';
+                        else if (stat === 'playing' || stat === 'main') status = 'main';
+                    }
+
+                    // Penentuan Warna (Hitam, Kuning, Hijau)
+                    let bgClass = 'bg-black text-white'; // Kosong
+                    let statusText = 'KOSONG';
+                    if (status === 'book') { bgClass = 'bg-yellow-400 text-black'; statusText = 'BOOKED'; }
+                    else if (status === 'main') { bgClass = 'bg-green-500 text-white'; statusText = 'MAIN'; }
+
+                    html += `
+                        <div class="border-2 border-black rounded-lg p-2 text-center shadow-[2px_2px_0px_#000] ${bgClass}">
+                            <p class="font-black text-lg leading-none">U${i}</p>
+                            <p class="text-[9px] font-bold uppercase mt-1">${statusText}</p>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+                return html;
             },
 
             // --- LOGS (ADMIN & MANAGER) ---
             renderLogsUI: () => {
                 return `
                     <div class="mario-card p-4 animate-pop">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="font-black text-sm">LOGS (HARI INI & KEMARIN)</h3>
+                        <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4 uppercase">Status 9 Unit</h2>
+                        <div id="dashboard-unit-boxes">
+                            ${APP.renderUnitBoxes()}
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-3 mt-4 border-t-2 border-dashed border-gray-400 pt-4">
+                            <h3 class="font-black text-sm">LOGS HARI INI</h3>
                             <select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input w-auto p-1 text-xs">
                                 <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda Aceh">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
                             </select>
@@ -276,10 +323,10 @@
                 await APP.loadDashboard();
             },
 
-            // --- INPUT FORM DYNAMIC UNITS ---
+            // --- INPUT FORM (UNIT TERFILTER OTOMATIS) ---
             renderInputForm: () => {
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                const b = STATE.user.branch; 
+                const b = STATE.user.branch || ''; 
                 return `
                 <div class="mario-card p-5 animate-pop">
                     <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4">INPUT TRANSAKSI</h2>
@@ -288,10 +335,12 @@
                         <div class="grid grid-cols-2 gap-2">
                             <div><label class="text-[10px] font-bold">CABANG</label>
                                 <select id="r-branch" onchange="APP.updateUnitOptions()" class="mario-input p-2 text-sm">
-                                    <option value="Banda Aceh" ${b.includes('Banda')?'selected':''}>Banda Aceh</option><option value="Sabang" ${b==='Sabang'?'selected':''}>Sabang</option><option value="Aceh Timur" ${b.includes('Timur')?'selected':''}>Aceh Timur</option>
+                                    <option value="Banda Aceh" ${b.includes('Banda')?'selected':''}>Banda Aceh</option>
+                                    <option value="Sabang" ${b.includes('Sabang')?'selected':''}>Sabang</option>
+                                    <option value="Aceh Timur" ${b.includes('Timur')?'selected':''}>Aceh Timur</option>
                                 </select>
                             </div>
-                            <div><label class="text-[10px] font-bold">UNIT</label><select id="r-unit" class="mario-input p-2 text-sm"></select></div>
+                            <div><label class="text-[10px] font-bold">UNIT</label><select id="r-unit" class="mario-input p-2 text-sm" required></select></div>
                         </div>
                         <div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-bold">TIPE SEWA</label><select id="r-type" onchange="APP.updatePrice()" class="mario-input p-2 text-sm"><option value="Paket">Paket</option><option value="Regular">Regular</option></select></div><div><label class="text-[10px] font-bold">AMUNISI</label><select id="r-prod" onchange="APP.updatePrice()" class="mario-input p-2 text-sm"></select></div></div>
                         <div><label class="text-[10px] font-bold">WAKTU MULAI SEWA</label><input type="datetime-local" id="r-datetime" value="${now.toISOString().slice(0,16)}" required class="mario-input p-2 text-sm"></div>
@@ -304,10 +353,18 @@
                 const branch = document.getElementById('r-branch').value;
                 const unitSel = document.getElementById('r-unit');
                 if(!unitSel) return;
+                
                 let opts = '';
-                if(branch === 'Sabang') opts = '<option>Unit 1</option><option>Unit 2</option>';
-                else if(branch === 'Banda Aceh') opts = '<option>Unit 3</option><option>Unit 4</option><option>Unit 5</option><option>Unit 6</option><option>Unit 7</option>';
-                else if(branch === 'Aceh Timur') opts = '<option>Unit 8</option><option>Unit 9</option>';
+                // Filter Aturan Unit V3.1: Sabang 1-2, Banda 3-7, Atim 8-9
+                if(branch === 'Sabang') {
+                    opts = '<option value="Unit 1">Unit 1</option><option value="Unit 2">Unit 2</option>';
+                } else if(branch === 'Banda Aceh') {
+                    opts = '<option value="Unit 3">Unit 3</option><option value="Unit 4">Unit 4</option><option value="Unit 5">Unit 5</option><option value="Unit 6">Unit 6</option><option value="Unit 7">Unit 7</option>';
+                } else if(branch === 'Aceh Timur') {
+                    opts = '<option value="Unit 8">Unit 8</option><option value="Unit 9">Unit 9</option>';
+                } else {
+                    opts = '<option value="Unit 1">Unit 1</option>'; // Fallback aman
+                }
                 unitSel.innerHTML = opts;
             },
             updatePrice: () => {
@@ -317,22 +374,32 @@
                     prodSel.innerHTML = CONFIG.PRICING[type].map((p,i) => `<option value="${i}">${p.name} ${p.time!=='Bebas'?'('+p.time+')':''}</option>`).join('');
                     document.getElementById('r-type').dataset.last = type;
                 }
-                STATE.lastPrice = CONFIG.PRICING[type][prodSel.value].price;
-                document.getElementById('price-tag').innerText = APP.formatRp(STATE.lastPrice);
+                const price = CONFIG.PRICING[type][prodSel.value].price;
+                document.getElementById('price-tag').innerText = APP.formatRp(price);
             },
             saveRental: async (e) => {
                 e.preventDefault();
                 APP.showLoader('MENYIMPAN...');
-                const type = document.getElementById('r-type').value;
-                const prodSel = document.getElementById('r-prod');
-                const formattedDate = document.getElementById('r-datetime').value.replace('T', ' ') + ':00'; 
-                await APP.api({
-                    action: 'input_rental',
-                    name: document.getElementById('r-name').value, wa: document.getElementById('r-wa').value, branch: document.getElementById('r-branch').value, unit: document.getElementById('r-unit').value,
-                    price: STATE.lastPrice, admin_name: STATE.user.username, status_unit: 'booked', pembayaran: 'Belum',
-                    paket: `${CONFIG.PRICING[type][prodSel.value].name} (${type})`, jam_mulai_sewa: formattedDate
-                });
-                await APP.loadDashboard();
+                try {
+                    const type = document.getElementById('r-type').value;
+                    const prodSel = document.getElementById('r-prod');
+                    const rawDate = document.getElementById('r-datetime').value || ''; 
+                    const formattedDate = rawDate ? rawDate.replace('T', ' ') + (rawDate.length === 16 ? ':00' : '') : '';
+                    const finalPrice = CONFIG.PRICING[type][prodSel.value].price;
+                    const finalName = CONFIG.PRICING[type][prodSel.value].name;
+
+                    await APP.api({
+                        action: 'input_rental',
+                        name: document.getElementById('r-name').value, wa: document.getElementById('r-wa').value, 
+                        branch: document.getElementById('r-branch').value, unit: document.getElementById('r-unit').value,
+                        price: finalPrice, admin_name: STATE.user.username, status_unit: 'booked', pembayaran: 'Belum',
+                        paket: `${finalName} (${type})`, jam_mulai_sewa: formattedDate
+                    });
+                    await APP.loadDashboard();
+                } catch (error) {
+                    alert("Gagal memproses input. Mohon coba lagi.");
+                    APP.hideLoader();
+                }
             },
 
             // --- EXPENSE ---
