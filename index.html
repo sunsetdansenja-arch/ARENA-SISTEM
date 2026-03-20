@@ -4,52 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ARENA SYSTEM - Integrated App</title>
-    
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
-    
     <style>
         :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
-        body {
-            font-family: 'Fredoka', sans-serif;
-            background-color: var(--mario-orange);
-            color: var(--mario-black);
-            -webkit-font-smoothing: antialiased;
-            background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px);
-            background-size: 20px 20px;
-        }
-        .mario-card {
-            background-color: white; border: 4px solid var(--mario-black);
-            border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-black);
-        }
-        .mario-btn {
-            background-color: white; border: 4px solid var(--mario-black);
-            border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black);
-            transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer;
-        }
+        body { font-family: 'Fredoka', sans-serif; background-color: var(--mario-orange); color: var(--mario-black); -webkit-font-smoothing: antialiased; background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px); background-size: 20px 20px; }
+        .mario-card { background-color: white; border: 4px solid var(--mario-black); border-radius: 16px; box-shadow: 6px 6px 0px 0px var(--mario-black); }
+        .mario-btn { background-color: white; border: 4px solid var(--mario-black); border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--mario-black); transition: all 0.1s ease-in-out; font-weight: 700; text-align: center; cursor: pointer; }
         .mario-btn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px 0px var(--mario-black); }
-        .mario-input {
-            width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black);
-            border-radius: 8px; padding: 10px; font-weight: 600; outline: none;
-        }
+        .mario-input { width: 100%; background-color: #F3F4F6; border: 3px solid var(--mario-black); border-radius: 8px; padding: 10px; font-weight: 600; outline: none; }
         .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-            width: 100%; max-width: 448px; background: white; border-top: 4px solid var(--mario-black);
-            display: flex; justify-content: space-around; padding: 10px 0; z-index: 50;
-        }
+        .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 448px; background: white; border-top: 4px solid var(--mario-black); display: flex; justify-content: space-around; padding: 10px 0; z-index: 50; }
         .nav-item { flex: 1; text-align: center; font-size: 11px; font-weight: bold; color: gray; cursor: pointer; }
         .nav-item.active { color: var(--mario-orange); text-shadow: 1px 1px 0px black; }
         .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
-        #loader {
-            position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .spinner {
-            width: 50px; height: 50px; border: 6px solid var(--mario-black);
-            border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite;
-        }
+        #loader { position: fixed; inset: 0; background: rgba(255,107,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 6px solid var(--mario-black); border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .hidden { display: none !important; }
         .animate-pop { animation: popIn 0.3s forwards; }
@@ -76,7 +47,6 @@
     </header>
 
     <main id="app" class="max-w-md mx-auto p-4 mt-2 animate-pop">
-        
         <section id="view-login" class="mario-card p-6">
             <h2 class="text-xl font-black mb-6 text-center border-b-4 border-black pb-2 uppercase">Akses Sistem</h2>
             <form id="form-login" class="space-y-4">
@@ -106,7 +76,6 @@
             </div>
             <div id="owner-logs" class="space-y-3 pb-6"></div>
         </section>
-
     </main>
 
     <nav id="bottom-nav" class="bottom-nav hidden">
@@ -120,7 +89,7 @@
 
     <script>
         const CONFIG = {
-            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1", // Pastikan URL ini aktif
+            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1", 
             PRICING: {
                 Paket: [
                     { name: "Malam", price: 50000 }, { name: "Pagi", price: 45000 }, 
@@ -143,35 +112,45 @@
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
             hideLoader: () => document.getElementById('loader').classList.add('hidden'),
             formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
-            
-            // Helper Time
             getTodayStr: () => new Date().toISOString().split('T')[0],
             getYesterdayStr: () => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; },
             getMonthStr: () => new Date().toISOString().substring(0,7),
             
+            // INI PENGIRIMAN DATA YANG BERANAK (NESTED)
             api: async (p) => {
                 try {
-                    const r = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', body: JSON.stringify(p) });
+                    const payloadBody = {
+                        action: p.action,
+                        data: p
+                    };
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payloadBody) 
+                    });
                     if (!r.ok) return [];
                     const txt = await r.text();
                     return txt ? JSON.parse(txt) : [];
-                } catch (e) { console.error(e); return null; }
+                } catch (e) { 
+                    console.error("Fetch Error:", e); 
+                    return null; 
+                }
             },
 
-            // --- AUTH ---
             handleLogin: async (e) => {
                 e.preventDefault();
                 APP.showLoader('VERIFIKASI...');
                 const data = await APP.api({ action: 'login', username: document.getElementById('login-user').value, password: document.getElementById('login-pass').value });
                 APP.hideLoader();
                 
+                if (data === null) { alert("❌ Gagal Terhubung! Aktifkan CORS di n8n."); return; }
+
                 let rawUser = Array.isArray(data) ? (data[0]?.json || data[0]) : (data?.json || data);
                 if (rawUser && rawUser.role) {
                     let roleStr = String(rawUser.role).toLowerCase().trim();
                     let uType = roleStr;
-                    let uBranch = "Semua Cabang"; // Default untuk admin/manager
+                    let uBranch = "Semua Cabang"; 
                     
-                    // Parsing cerdas untuk role "sh sabang", dll
                     if(roleStr.startsWith('sh')) {
                         uType = 'owner';
                         if(roleStr.includes('sabang')) uBranch = 'Sabang';
@@ -179,20 +158,15 @@
                         else if(roleStr.includes('atim') || roleStr.includes('aceh timur')) uBranch = 'Aceh Timur';
                     }
 
-                    STATE.user = { 
-                        username: rawUser.id_user_arena || rawUser.Users || 'User', 
-                        userType: uType, // 'admin', 'manager', 'owner'
-                        branch: uBranch 
-                    };
+                    STATE.user = { username: rawUser.id_user_arena || rawUser.Users || 'User', userType: uType, branch: uBranch };
                     localStorage.setItem('arena_user_v2', JSON.stringify(STATE.user));
                     APP.loadDashboard();
-                } else { alert("Gagal Login. Periksa Username/Password."); }
+                } else { alert("❌ Gagal Login. Periksa Username/Password."); }
             },
             logout: () => { localStorage.removeItem('arena_user_v2'); location.reload(); },
 
-            // --- DASHBOARD ROUTING ---
             loadDashboard: async () => {
-                APP.showLoader('SINKRONISASI DATA...');
+                APP.showLoader('SINKRONISASI...');
                 const res = await APP.api({ action: 'get_dashboard', role: STATE.user.userType, branch: STATE.user.branch });
                 APP.hideLoader();
 
@@ -228,19 +202,10 @@
                 if (tab === 'logs') container.innerHTML = APP.renderLogsUI();
                 else if (tab === 'input') { container.innerHTML = APP.renderInputForm(); APP.updatePrice(); }
                 else if (tab === 'expense') container.innerHTML = APP.renderExpenseForm();
-                else if (tab === 'report') container.innerHTML = `<div class="mario-card p-6 text-center"><button onclick="APP.printReport()" class="w-full mario-btn bg-black text-white p-4">🖨️ CETAK LAPORAN HARI INI</button></div>`;
+                else if (tab === 'report') container.innerHTML = `<div class="mario-card p-6 text-center"><button onclick="APP.printReport()" class="w-full mario-btn bg-black text-white p-4">🖨️ CETAK LAPORAN</button></div>`;
             },
 
-            // --- ADMIN/MANAGER LOGS ---
             renderLogsUI: () => {
-                const todayStr = APP.getTodayStr();
-                const yestStr = APP.getYesterdayStr();
-                // Filter awal (Hari ini & Kemarin saja)
-                const recentLogs = STATE.logs.filter(l => {
-                    const d = (l.jam_mulai_sewa||'').substring(0,10);
-                    return d === todayStr || d === yestStr;
-                });
-
                 return `
                     <div class="mario-card p-4 animate-pop">
                         <div class="flex justify-between items-center mb-3">
@@ -250,27 +215,28 @@
                             </select>
                         </div>
                         <div id="filtered-logs-container" class="space-y-3">
-                            ${APP.generateLogHTML(recentLogs, 'ALL')}
+                            ${APP.getLogListHTML('ALL')}
                         </div>
                     </div>
                 `;
             },
             updateLogList: () => {
+                const selCabang = document.getElementById('log-filter-cabang').value;
+                document.getElementById('filtered-logs-container').innerHTML = APP.getLogListHTML(selCabang);
+            },
+            getLogListHTML: (cabangFilter) => {
                 const todayStr = APP.getTodayStr();
                 const yestStr = APP.getYesterdayStr();
+                const isManager = STATE.user.userType === 'manager';
+                
                 const recentLogs = STATE.logs.filter(l => {
                     const d = (l.jam_mulai_sewa||'').substring(0,10);
                     return d === todayStr || d === yestStr;
                 });
-                const selCabang = document.getElementById('log-filter-cabang').value;
-                document.getElementById('filtered-logs-container').innerHTML = APP.generateLogHTML(recentLogs, selCabang);
-            },
-            generateLogHTML: (logsData, cabangFilter) => {
-                const isManager = STATE.user.userType === 'manager';
-                const filtered = logsData.filter(l => cabangFilter === 'ALL' || l.cabang_arena === cabangFilter || l.cabang_arena === (cabangFilter === 'Banda Aceh' ? 'Banda' : cabangFilter));
+
+                const filtered = recentLogs.filter(l => cabangFilter === 'ALL' || l.cabang_arena === cabangFilter || l.cabang_arena === (cabangFilter === 'Banda Aceh' ? 'Banda' : cabangFilter));
                 
                 return filtered.reverse().map(l => {
-                    // Cek ID (Dukungan untuk Sheets / NocoDB)
                     const rowId = l.id || l.row_number || l._rowIndex;
                     const dateRaw = l.jam_mulai_sewa || '';
                     
@@ -279,13 +245,10 @@
                         actionHtml = `
                         <div class="flex gap-2 mt-3 pt-2 border-t border-gray-200">
                             <select id="stat-${rowId}" class="mario-input p-1 text-[10px] flex-1">
-                                <option value="booked" ${l.status_unit_arena==='booked'?'selected':''}>BOOKED</option>
-                                <option value="playing" ${l.status_unit_arena==='playing'?'selected':''}>PLAYING</option>
-                                <option value="finished" ${l.status_unit_arena==='finished'?'selected':''}>FINISHED</option>
+                                <option value="booked" ${l.status_unit_arena==='booked'?'selected':''}>BOOKED</option><option value="playing" ${l.status_unit_arena==='playing'?'selected':''}>PLAYING</option><option value="finished" ${l.status_unit_arena==='finished'?'selected':''}>FINISHED</option>
                             </select>
                             <select id="pay-${rowId}" class="mario-input p-1 text-[10px] flex-1">
-                                <option value="Lunas" ${l.pembayaran==='Lunas'?'selected':''}>LUNAS</option>
-                                <option value="Belum" ${l.pembayaran!=='Lunas'?'selected':''}>BELUM</option>
+                                <option value="Lunas" ${l.pembayaran==='Lunas'?'selected':''}>LUNAS</option><option value="Belum" ${l.pembayaran!=='Lunas'?'selected':''}>BELUM</option>
                             </select>
                             <button onclick="APP.updateStatus('${rowId}')" class="mario-btn bg-yellow-400 p-1 text-[10px]">SAVE</button>
                         </div>`;
@@ -305,54 +268,27 @@
                         </div>
                         <p class="font-bold text-sm uppercase">${l.nama_pelanggan_arena} <a href="${l.link_wa_pelanggan_arena}" target="_blank" class="text-blue-500">💬</a></p>
                         <div class="flex justify-between items-end mt-1">
-                            <span class="text-xs font-semibold text-gray-700">${l.paket_arena}</span>
-                            <span class="text-sm font-black text-orange-600">${APP.formatRp(l.tagihan_arena)}</span>
+                            <span class="text-xs font-semibold text-gray-700">${l.paket_arena}</span><span class="text-sm font-black text-orange-600">${APP.formatRp(l.tagihan_arena)}</span>
                         </div>
                         ${actionHtml}
                     </div>`;
                 }).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
             },
 
-            // --- INPUT FORM ---
             renderInputForm: () => {
-                // Konversi tanggal ke format datetime-local HTML: YYYY-MM-DDTHH:MM
-                const now = new Date();
-                // Adjust timezone offset
-                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                const localDatetime = now.toISOString().slice(0,16);
-
+                const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 return `
                 <div class="mario-card p-5 animate-pop">
                     <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4">INPUT TRANSAKSI</h2>
                     <form onsubmit="APP.saveRental(event)" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-bold">PELANGGAN</label><input type="text" id="r-name" placeholder="Nama" required class="mario-input p-2 text-sm"></div><div><label class="text-[10px] font-bold">NO WA</label><input type="number" id="r-wa" placeholder="08xx" required class="mario-input p-2 text-sm"></div></div>
                         <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[10px] font-bold">PELANGGAN</label><input type="text" id="r-name" placeholder="Nama" required class="mario-input p-2 text-sm"></div>
-                            <div><label class="text-[10px] font-bold">NO WA</label><input type="number" id="r-wa" placeholder="08xx" required class="mario-input p-2 text-sm"></div>
+                            <div><label class="text-[10px] font-bold">CABANG</label><select id="r-branch" class="mario-input p-2 text-sm"><option value="Banda Aceh">Banda Aceh</option><option value="Sabang">Sabang</option><option value="Aceh Timur">Aceh Timur</option></select></div>
+                            <div><label class="text-[10px] font-bold">UNIT</label><select id="r-unit" class="mario-input p-2 text-sm"><option>Unit 1</option><option>Unit 2</option><option>Unit 3</option><option>Unit 4</option><option>Unit 5</option><option>Unit 6</option><option>Unit 7</option></select></div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[10px] font-bold">CABANG</label>
-                                <select id="r-branch" class="mario-input p-2 text-sm">
-                                    <option value="Banda Aceh">Banda Aceh</option><option value="Sabang">Sabang</option><option value="Aceh Timur">Aceh Timur</option>
-                                </select>
-                            </div>
-                            <div><label class="text-[10px] font-bold">UNIT</label>
-                                <select id="r-unit" class="mario-input p-2 text-sm">
-                                    <option>Unit 1</option><option>Unit 2</option><option>Unit 3</option><option>Unit 4</option><option>Unit 5</option><option>Unit 6</option><option>Unit 7</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[10px] font-bold">TIPE SEWA</label><select id="r-type" onchange="APP.updatePrice()" class="mario-input p-2 text-sm"><option value="Paket">Paket</option><option value="Regular">Regular</option></select></div>
-                            <div><label class="text-[10px] font-bold">AMUNISI</label><select id="r-prod" onchange="APP.updatePrice()" class="mario-input p-2 text-sm"></select></div>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold">WAKTU MULAI SEWA</label>
-                            <input type="datetime-local" id="r-datetime" value="${localDatetime}" required class="mario-input p-2 text-sm">
-                        </div>
-                        <div class="bg-black text-yellow-400 p-3 rounded-lg text-center mt-2">
-                            <p class="text-[10px] font-bold text-gray-300">TOTAL TAGIHAN</p>
-                            <p id="price-tag" class="text-2xl font-black">Rp 0</p>
-                        </div>
+                        <div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-bold">TIPE SEWA</label><select id="r-type" onchange="APP.updatePrice()" class="mario-input p-2 text-sm"><option value="Paket">Paket</option><option value="Regular">Regular</option></select></div><div><label class="text-[10px] font-bold">AMUNISI</label><select id="r-prod" onchange="APP.updatePrice()" class="mario-input p-2 text-sm"></select></div></div>
+                        <div><label class="text-[10px] font-bold">WAKTU MULAI SEWA</label><input type="datetime-local" id="r-datetime" value="${now.toISOString().slice(0,16)}" required class="mario-input p-2 text-sm"></div>
+                        <div class="bg-black text-yellow-400 p-3 rounded-lg text-center mt-2"><p class="text-[10px] font-bold text-gray-300">TOTAL TAGIHAN</p><p id="price-tag" class="text-2xl font-black">Rp 0</p></div>
                         <button type="submit" class="w-full mario-btn bg-yellow-400 p-3 mt-4">SIMPAN 💾</button>
                     </form>
                 </div>`;
@@ -370,38 +306,27 @@
             saveRental: async (e) => {
                 e.preventDefault();
                 APP.showLoader('MENYIMPAN...');
-                
                 const type = document.getElementById('r-type').value;
                 const prodSel = document.getElementById('r-prod');
-                const rawDate = document.getElementById('r-datetime').value; // YYYY-MM-DDTHH:MM
-                const formattedDate = rawDate.replace('T', ' ') + ':00'; // YYYY-MM-DD HH:MM:00
-
+                const formattedDate = document.getElementById('r-datetime').value.replace('T', ' ') + ':00'; 
                 await APP.api({
                     action: 'input_rental',
-                    name: document.getElementById('r-name').value, wa: document.getElementById('r-wa').value,
-                    branch: document.getElementById('r-branch').value, unit: document.getElementById('r-unit').value,
+                    name: document.getElementById('r-name').value, wa: document.getElementById('r-wa').value, branch: document.getElementById('r-branch').value, unit: document.getElementById('r-unit').value,
                     price: STATE.lastPrice, admin_name: STATE.user.username, status_unit: 'booked', pembayaran: 'Belum',
-                    paket: `${CONFIG.PRICING[type][prodSel.value].name} (${type})`,
-                    jam_mulai_sewa: formattedDate
+                    paket: `${CONFIG.PRICING[type][prodSel.value].name} (${type})`, jam_mulai_sewa: formattedDate
                 });
                 await APP.loadDashboard();
             },
-
-            // --- MANAGER ACTIONS ---
             updateStatus: async (id) => {
-                const s = document.getElementById(`stat-${id}`).value;
-                const p = document.getElementById(`pay-${id}`).value;
                 APP.showLoader('UPDATE...');
-                await APP.api({ action: 'update_status', row_id: id, status_unit: s, pembayaran: p });
+                await APP.api({ action: 'update_status', row_id: id, status_unit: document.getElementById(`stat-${id}`).value, pembayaran: document.getElementById(`pay-${id}`).value });
                 await APP.loadDashboard();
             },
             renderExpenseForm: () => `
                 <div class="mario-card p-5 animate-pop">
-                    <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4">INPUT BIAYA/PENGELUARAN</h2>
+                    <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4">INPUT PENGELUARAN</h2>
                     <form onsubmit="APP.saveExpense(event)" class="space-y-3">
-                        <div><label class="text-xs font-bold">CABANG</label>
-                            <select id="exp-branch" class="mario-input p-2 text-sm"><option value="Banda Aceh">Banda Aceh</option><option value="Sabang">Sabang</option><option value="Aceh Timur">Aceh Timur</option></select>
-                        </div>
+                        <div><label class="text-xs font-bold">CABANG</label><select id="exp-branch" class="mario-input p-2 text-sm"><option value="Banda Aceh">Banda Aceh</option><option value="Sabang">Sabang</option><option value="Aceh Timur">Aceh Timur</option></select></div>
                         <div><label class="text-xs font-bold">NAMA ITEM</label><input type="text" id="exp-name" required class="mario-input p-2"></div>
                         <div><label class="text-xs font-bold">NOMINAL (Rp)</label><input type="number" id="exp-amount" required class="mario-input p-2"></div>
                         <div><label class="text-xs font-bold">TANGGAL</label><input type="date" id="exp-date" required class="mario-input p-2" value="${APP.getTodayStr()}"></div>
@@ -414,61 +339,36 @@
                 await APP.api({ action: 'add_expense', expense_name: document.getElementById('exp-name').value, expense_amount: document.getElementById('exp-amount').value, expense_date: document.getElementById('exp-date').value, branch: document.getElementById('exp-branch').value });
                 await APP.loadDashboard();
             },
-
-            // --- OWNER VIEW ---
             renderOwner: () => {
                 document.getElementById('view-owner').classList.remove('hidden');
-                
-                const branchStr = STATE.user.branch; // Sudah di-parse otomatis dari auth (misal: "Sabang")
-                const todayStr = APP.getTodayStr();
-                const monthStr = APP.getMonthStr(); // YYYY-MM
-
+                const branchStr = STATE.user.branch; const todayStr = APP.getTodayStr(); const monthStr = APP.getMonthStr(); 
                 let omsetToday = 0; let omsetMonth = 0;
                 
-                // Owner terkunci hanya melihat log cabangnya untuk bulan ini
                 const ownerLogs = STATE.logs.filter(l => {
-                    const dateRaw = l.jam_mulai_sewa || '';
-                    const dateStr = dateRaw.substring(0,10);
-                    // Sesuaikan string pencocokan cabang agar akurat
-                    const matchBranch = l.cabang_arena === branchStr || (branchStr==='Banda Aceh' && l.cabang_arena==='Banda');
-                    return matchBranch && dateStr.startsWith(monthStr);
+                    const dateStr = (l.jam_mulai_sewa || '').substring(0,10);
+                    return (l.cabang_arena === branchStr || (branchStr==='Banda Aceh' && l.cabang_arena==='Banda')) && dateStr.startsWith(monthStr);
                 });
 
                 ownerLogs.forEach(l => {
-                    const d = (l.jam_mulai_sewa||'').substring(0,10);
-                    if (d === todayStr) omsetToday += Number(l.tagihan_arena);
+                    if ((l.jam_mulai_sewa||'').substring(0,10) === todayStr) omsetToday += Number(l.tagihan_arena);
                     omsetMonth += Number(l.tagihan_arena);
                 });
 
-                document.getElementById('owner-omset-today').innerText = APP.formatRp(omsetToday);
-                document.getElementById('owner-omset-month').innerText = APP.formatRp(omsetMonth);
-                
+                document.getElementById('owner-omset-today').innerText = APP.formatRp(omsetToday); document.getElementById('owner-omset-month').innerText = APP.formatRp(omsetMonth);
                 document.getElementById('owner-logs').innerHTML = ownerLogs.reverse().map(l => `
                     <div class="mario-card p-3 bg-white flex justify-between items-center text-xs">
-                        <div>
-                            <p class="font-black">${l.nama_pelanggan_arena} <span class="bg-gray-200 px-1 rounded text-[10px]">${l.unit_arena}</span></p>
-                            <p class="text-[10px] text-gray-500 font-bold">${(l.jam_mulai_sewa||'').substring(0,16)}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-black text-green-600">${APP.formatRp(l.tagihan_arena)}</p>
-                            <p class="text-[10px] font-bold text-gray-400">${l.paket_arena}</p>
-                        </div>
-                    </div>
-                `).join('') || '<p class="text-center text-white font-bold">Tidak ada riwayat transaksi bulan ini.</p>';
+                        <div><p class="font-black">${l.nama_pelanggan_arena} <span class="bg-gray-200 px-1 rounded text-[10px]">${l.unit_arena}</span></p><p class="text-[10px] text-gray-500 font-bold">${(l.jam_mulai_sewa||'').substring(0,16)}</p></div>
+                        <div class="text-right"><p class="font-black text-green-600">${APP.formatRp(l.tagihan_arena)}</p><p class="text-[10px] font-bold text-gray-400">${l.paket_arena}</p></div>
+                    </div>`).join('') || '<p class="text-center text-white font-bold">Tidak ada riwayat.</p>';
             },
-
-            // --- REPORT ---
             printReport: () => {
-                const todayStr = APP.getTodayStr();
-                let rowHTML = ''; let totalOmset = 0;
-                
+                const todayStr = APP.getTodayStr(); let rowHTML = ''; let totalOmset = 0;
                 STATE.logs.forEach(l => {
                     if ((l.jam_mulai_sewa||'').includes(todayStr)) {
                         totalOmset += Number(l.tagihan_arena);
                         rowHTML += `<tr><td style="border:1px solid #000; padding:8px;">${l.cabang_arena}</td><td style="border:1px solid #000; padding:8px;">${l.unit_arena}</td><td style="border:1px solid #000; padding:8px;">${l.nama_pelanggan_arena}</td><td style="border:1px solid #000; padding:8px;">${l.paket_arena}</td><td style="border:1px solid #000; padding:8px; text-align:right;">${APP.formatRp(l.tagihan_arena)}</td></tr>`;
                     }
                 });
-
                 document.getElementById('print-area').innerHTML = `
                     <h1 style="text-align:center; font-size:24px; margin-bottom:5px;">LAPORAN OMSET KESELURUHAN</h1>
                     <h2 style="text-align:center; font-size:18px; margin-bottom:20px;">ARENA PLAYBOX</h2>
@@ -477,14 +377,10 @@
                         <tr style="background:#eee;"><th style="border:1px solid #000; padding:8px;">Cabang</th><th style="border:1px solid #000; padding:8px;">Unit</th><th style="border:1px solid #000; padding:8px;">Pelanggan</th><th style="border:1px solid #000; padding:8px;">Sewa</th><th style="border:1px solid #000; padding:8px; text-align:right;">Tagihan</th></tr>
                         ${rowHTML}
                         <tr><td colspan="4" style="border:1px solid #000; padding:10px; text-align:right; font-weight:bold; font-size:16px;">TOTAL OMSET HARI INI</td><td style="border:1px solid #000; padding:10px; text-align:right; font-weight:bold; font-size:16px;">${APP.formatRp(totalOmset)}</td></tr>
-                    </table>
-                `;
-                document.getElementById('print-area').classList.remove('hidden');
-                window.print();
-                document.getElementById('print-area').classList.add('hidden');
+                    </table>`;
+                document.getElementById('print-area').classList.remove('hidden'); window.print(); document.getElementById('print-area').classList.add('hidden');
             }
         };
-
         APP.init();
     </script>
 </body>
