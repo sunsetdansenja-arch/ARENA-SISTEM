@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V3 - Integrated App</title>
+    <title>ARENA SYSTEM V3.1 - Integrated App</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +40,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V3.0 | Login Dulu Bos</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V3.1 | Login Dulu Bos</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -121,7 +121,6 @@
             getYesterdayStr: () => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; },
             getMonthStr: () => new Date().toISOString().substring(0,7),
             
-            // Generate List 12 Bulan Terakhir untuk Report
             generateMonthOptions: () => {
                 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
                 let opts = '';
@@ -163,7 +162,6 @@
                         else if(roleStr.includes('banda')) uBranch = 'Banda Aceh';
                         else if(roleStr.includes('atim') || roleStr.includes('aceh timur')) uBranch = 'Aceh Timur';
                     } else {
-                        // Jika role admin/manager, simpan juga info cabangnya dari DB sbg default branch dia
                         if(rawUser.cabang_arena || rawUser.cabang) uBranch = rawUser.cabang_arena || rawUser.cabang;
                     }
 
@@ -208,10 +206,10 @@
                 document.getElementById(`tab-${tab}`).classList.add('active');
                 
                 const container = document.getElementById('main-content');
-                if (tab === 'logs') container.innerHTML = APP.renderLogsUI();
-                else if (tab === 'input') { container.innerHTML = APP.renderInputForm(); APP.updatePrice(); }
-                else if (tab === 'expense') container.innerHTML = APP.renderExpenseForm();
-                else if (tab === 'report') container.innerHTML = APP.renderReportTab();
+                if (tab === 'logs') { container.innerHTML = APP.renderLogsUI(); }
+                else if (tab === 'input') { container.innerHTML = APP.renderInputForm(); APP.updatePrice(); APP.updateUnitOptions(); }
+                else if (tab === 'expense') { container.innerHTML = APP.renderExpenseForm(); }
+                else if (tab === 'report') { container.innerHTML = APP.renderReportTab(); }
             },
 
             // --- LOGS (ADMIN & MANAGER) ---
@@ -241,8 +239,6 @@
                 
                 return filtered.reverse().map(l => {
                     const rowId = l.id || l.row_number || l._rowIndex;
-                    
-                    // Admin & Manager KEDUANYA bisa liat tombol Lunas/Belum Lunas & Status
                     return `
                     <div class="border-2 border-black p-3 rounded-xl bg-white shadow-[2px_2px_0px_#000]">
                         <div class="flex justify-between items-center mb-1">
@@ -268,7 +264,6 @@
                 }).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
             },
 
-            // Auto-Save Actions 
             changeStatus: async (id, newStat, currentPay) => {
                 APP.showLoader('UPDATE STATUS...');
                 await APP.api({ action: 'update_status', row_id: id, status_unit: newStat, pembayaran: currentPay });
@@ -281,10 +276,10 @@
                 await APP.loadDashboard();
             },
 
-            // --- INPUT FORM ---
+            // --- INPUT FORM DYNAMIC UNITS ---
             renderInputForm: () => {
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                const b = STATE.user.branch; // Set otomatis cabang kasir (fallback aman)
+                const b = STATE.user.branch; 
                 return `
                 <div class="mario-card p-5 animate-pop">
                     <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4">INPUT TRANSAKSI</h2>
@@ -292,11 +287,11 @@
                         <div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-bold">PELANGGAN</label><input type="text" id="r-name" placeholder="Nama" required class="mario-input p-2 text-sm"></div><div><label class="text-[10px] font-bold">NO WA</label><input type="number" id="r-wa" placeholder="08xx" required class="mario-input p-2 text-sm"></div></div>
                         <div class="grid grid-cols-2 gap-2">
                             <div><label class="text-[10px] font-bold">CABANG</label>
-                                <select id="r-branch" class="mario-input p-2 text-sm">
+                                <select id="r-branch" onchange="APP.updateUnitOptions()" class="mario-input p-2 text-sm">
                                     <option value="Banda Aceh" ${b.includes('Banda')?'selected':''}>Banda Aceh</option><option value="Sabang" ${b==='Sabang'?'selected':''}>Sabang</option><option value="Aceh Timur" ${b.includes('Timur')?'selected':''}>Aceh Timur</option>
                                 </select>
                             </div>
-                            <div><label class="text-[10px] font-bold">UNIT</label><select id="r-unit" class="mario-input p-2 text-sm"><option>Unit 1</option><option>Unit 2</option><option>Unit 3</option><option>Unit 4</option><option>Unit 5</option><option>Unit 6</option><option>Unit 7</option></select></div>
+                            <div><label class="text-[10px] font-bold">UNIT</label><select id="r-unit" class="mario-input p-2 text-sm"></select></div>
                         </div>
                         <div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-bold">TIPE SEWA</label><select id="r-type" onchange="APP.updatePrice()" class="mario-input p-2 text-sm"><option value="Paket">Paket</option><option value="Regular">Regular</option></select></div><div><label class="text-[10px] font-bold">AMUNISI</label><select id="r-prod" onchange="APP.updatePrice()" class="mario-input p-2 text-sm"></select></div></div>
                         <div><label class="text-[10px] font-bold">WAKTU MULAI SEWA</label><input type="datetime-local" id="r-datetime" value="${now.toISOString().slice(0,16)}" required class="mario-input p-2 text-sm"></div>
@@ -304,6 +299,16 @@
                         <button type="submit" class="w-full mario-btn bg-yellow-400 p-3 mt-4">SIMPAN 💾</button>
                     </form>
                 </div>`;
+            },
+            updateUnitOptions: () => {
+                const branch = document.getElementById('r-branch').value;
+                const unitSel = document.getElementById('r-unit');
+                if(!unitSel) return;
+                let opts = '';
+                if(branch === 'Sabang') opts = '<option>Unit 1</option><option>Unit 2</option>';
+                else if(branch === 'Banda Aceh') opts = '<option>Unit 3</option><option>Unit 4</option><option>Unit 5</option><option>Unit 6</option><option>Unit 7</option>';
+                else if(branch === 'Aceh Timur') opts = '<option>Unit 8</option><option>Unit 9</option>';
+                unitSel.innerHTML = opts;
             },
             updatePrice: () => {
                 const type = document.getElementById('r-type').value;
@@ -349,7 +354,7 @@
                 await APP.loadDashboard();
             },
 
-            // --- REPORT (12 BULAN & FILTER) ---
+            // --- REPORT ---
             renderReportTab: () => `
                 <div class="mario-card p-6 text-center animate-pop">
                     <h2 class="text-xl font-black mb-4 border-b-4 border-black pb-2">MESIN CETAK LAPORAN</h2>
@@ -372,16 +377,15 @@
             `,
             printReport: () => {
                 const branch = document.getElementById('report-branch').value;
-                const month = document.getElementById('report-month').value; // YYYY-MM
+                const month = document.getElementById('report-month').value; 
                 const monthLabel = document.getElementById('report-month').options[document.getElementById('report-month').selectedIndex].text;
 
                 let rowHTML = ''; let totalOmset = 0;
                 
                 STATE.logs.forEach(l => {
-                    const dateStr = (l.jam_mulai_sewa||'').substring(0,7); // Ambil YYYY-MM
+                    const dateStr = (l.jam_mulai_sewa||'').substring(0,7); 
                     const matchBranch = branch === 'ALL' || l.cabang_arena === branch || (branch === 'Banda Aceh' && l.cabang_arena === 'Banda');
                     
-                    // Filter kalau datanya ga dibatalin, sesuai bulan dan cabang
                     if (matchBranch && dateStr === month && l.status_unit_arena !== 'batal') {
                         totalOmset += Number(l.tagihan_arena);
                         rowHTML += `<tr><td style="border:1px solid #000; padding:8px;">${(l.jam_mulai_sewa||'').substring(0,10)}</td><td style="border:1px solid #000; padding:8px;">${l.cabang_arena} / ${l.unit_arena}</td><td style="border:1px solid #000; padding:8px;">${l.nama_pelanggan_arena}</td><td style="border:1px solid #000; padding:8px;">${l.paket_arena}</td><td style="border:1px solid #000; padding:8px; text-align:right;">${APP.formatRp(l.tagihan_arena)}</td></tr>`;
