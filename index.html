@@ -49,7 +49,6 @@
     </header>
 
     <main id="app" class="max-w-md mx-auto p-4 mt-2 animate-pop">
-        
         <section id="view-login" class="mario-card p-6">
             <h2 class="text-xl font-black mb-6 text-center border-b-4 border-black pb-2 uppercase">Akses Sistem</h2>
             <form id="form-login" class="space-y-4">
@@ -79,7 +78,6 @@
             </div>
             <div id="owner-logs" class="space-y-3 pb-6"></div>
         </section>
-
     </main>
 
     <nav id="bottom-nav" class="bottom-nav hidden">
@@ -117,38 +115,25 @@
             hideLoader: () => document.getElementById('loader').classList.add('hidden'),
             formatRp: (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0),
             
-            // FIX ZONA WAKTU: Pastikan selalu pakai jam lokal HP (WIB) bukan UTC server
-            getTodayStr: () => {
-                const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                return d.toISOString().split('T')[0];
-            },
-            getYesterdayStr: () => {
-                const d = new Date(); d.setDate(d.getDate()-1); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                return d.toISOString().split('T')[0];
-            },
-            getMonthStr: () => {
-                const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                return d.toISOString().substring(0,7);
-            },
+            // FIX TANGGAL: Selalu ikut jam HP lokal (WIB)
+            getTodayStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
+            getYesterdayStr: () => { const d = new Date(); d.setDate(d.getDate()-1); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
+            getTomorrowStr: () => { const d = new Date(); d.setDate(d.getDate()+1); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().split('T')[0]; },
+            getMonthStr: () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().substring(0,7); },
             
             generateMonthOptions: () => {
                 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
                 let opts = '';
                 for(let i=0; i<12; i++) {
                     let d = new Date(); d.setMonth(d.getMonth() - i);
-                    let val = d.toISOString().substring(0,7);
-                    let label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-                    opts += `<option value="${val}">${label}</option>`;
+                    opts += `<option value="${d.toISOString().substring(0,7)}">${monthNames[d.getMonth()]} ${d.getFullYear()}</option>`;
                 }
                 return opts;
             },
 
             api: async (p) => {
                 try {
-                    const payloadBody = { action: p.action, data: p };
-                    const r = await fetch(CONFIG.WEBHOOK_URL, { 
-                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadBody) 
-                    });
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: p.action, data: p }) });
                     if (!r.ok) return [];
                     const txt = await r.text(); return txt ? JSON.parse(txt) : [];
                 } catch (e) { return null; }
@@ -160,21 +145,20 @@
                 const data = await APP.api({ action: 'login', username: document.getElementById('login-user').value, password: document.getElementById('login-pass').value });
                 APP.hideLoader();
                 
-                if (data === null) { alert("❌ Gagal Terhubung! Cek koneksi / seting CORS di n8n."); return; }
-
+                if (data === null) { alert("❌ Gagal Terhubung! Cek koneksi."); return; }
                 let rawUser = Array.isArray(data) ? (data[0]?.json || data[0]) : (data?.json || data);
+                
                 if (rawUser && rawUser.role) {
                     let roleStr = String(rawUser.role).toLowerCase().trim();
                     let uType = roleStr; let uBranch = "Semua Cabang"; 
                     if(roleStr.startsWith('sh')) {
                         uType = 'owner';
                         if(roleStr.includes('sabang')) uBranch = 'Sabang';
-                        else if(roleStr.includes('banda')) uBranch = 'Banda'; // Gunakan format DB
+                        else if(roleStr.includes('banda')) uBranch = 'Banda'; 
                         else if(roleStr.includes('atim') || roleStr.includes('aceh timur')) uBranch = 'Aceh Timur';
                     } else {
                         if(rawUser.cabang_arena || rawUser.cabang) uBranch = rawUser.cabang_arena || rawUser.cabang;
                     }
-
                     STATE.user = { username: rawUser.id_user_arena || rawUser.Users || 'User', userType: uType, branch: uBranch };
                     localStorage.setItem('arena_user_v33', JSON.stringify(STATE.user));
                     APP.loadDashboard();
@@ -184,7 +168,9 @@
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI...');
-                const res = await APP.api({ action: 'get_dashboard', role: STATE.user.userType, branch: STATE.user.branch });
+                // Bypass filter cabang untuk Admin/Manager agar n8n menarik SEMUA data cabang
+                const reqBranch = (STATE.user.userType === 'admin' || STATE.user.userType === 'manager') ? 'ALL' : STATE.user.branch;
+                const res = await APP.api({ action: 'get_dashboard', role: STATE.user.userType, branch: reqBranch });
                 APP.hideLoader();
 
                 document.getElementById('view-login').classList.add('hidden');
@@ -217,18 +203,15 @@
                 
                 const container = document.getElementById('main-content');
                 if (tab === 'logs') { container.innerHTML = APP.renderLogsUI(); }
-                else if (tab === 'input') { 
-                    container.innerHTML = APP.renderInputForm(); 
-                    APP.updateUnitOptions(); 
-                    APP.updatePrice(); 
-                }
+                else if (tab === 'input') { container.innerHTML = APP.renderInputForm(); APP.updateUnitOptions(); APP.updatePrice(); }
                 else if (tab === 'expense') { container.innerHTML = APP.renderExpenseForm(); }
                 else if (tab === 'report') { container.innerHTML = APP.renderReportTab(); }
             },
 
-            // --- UI DASHBOARD 9 KOTAK UNIT ---
+            // --- 9 KOTAK DASHBOARD ---
             renderUnitBoxes: () => {
                 const todayStr = APP.getTodayStr();
+                const tomorrowStr = APP.getTomorrowStr(); // Kotak dashboard juga membaca jadwal besok
                 const reversedLogs = [...STATE.logs].reverse();
                 let html = '<div class="grid grid-cols-3 gap-2 mb-4">';
 
@@ -237,7 +220,7 @@
                     const latestLog = reversedLogs.find(l => {
                         const uNum = String(l.unit_arena).replace(/\D/g, ''); 
                         const dStr = (l.jam_mulai_sewa||'').substring(0,10);
-                        return uNum === String(i) && dStr === todayStr;
+                        return uNum === String(i) && (dStr === todayStr || dStr === tomorrowStr);
                     });
 
                     if (latestLog) {
@@ -246,8 +229,7 @@
                         else if (stat === 'playing' || stat === 'main') status = 'main';
                     }
 
-                    let bgClass = 'bg-black text-white'; 
-                    let statusText = 'KOSONG';
+                    let bgClass = 'bg-black text-white'; let statusText = 'KOSONG';
                     if (status === 'book') { bgClass = 'bg-yellow-400 text-black'; statusText = 'BOOKED'; }
                     else if (status === 'main') { bgClass = 'bg-green-500 text-white'; statusText = 'MAIN'; }
 
@@ -262,7 +244,6 @@
                 return html;
             },
 
-            // --- LOGS (ADMIN & MANAGER) ---
             renderLogsUI: () => {
                 return `
                     <div class="mario-card p-4 animate-pop">
@@ -272,7 +253,7 @@
                         </div>
                         
                         <div class="flex justify-between items-center mb-3 mt-4 border-t-2 border-dashed border-gray-400 pt-4">
-                            <h3 class="font-black text-sm">LOGS HARI INI & KEMARIN</h3>
+                            <h3 class="font-black text-[11px]">LOGS (KEMARIN, HARI INI & BESOK)</h3>
                             <select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input w-auto p-1 text-xs">
                                 <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
                             </select>
@@ -288,8 +269,14 @@
                 document.getElementById('filtered-logs-container').innerHTML = APP.getLogListHTML(selCabang);
             },
             getLogListHTML: (cabangFilter) => {
-                const todayStr = APP.getTodayStr(); const yestStr = APP.getYesterdayStr();
-                const recentLogs = STATE.logs.filter(l => { const d = (l.jam_mulai_sewa||'').substring(0,10); return d === todayStr || d === yestStr; });
+                const todayStr = APP.getTodayStr(); const yestStr = APP.getYesterdayStr(); const tomorrowStr = APP.getTomorrowStr();
+                
+                // Menarik data Kemarin, Hari Ini, dan Besok (Solusi Bug Baris 119)
+                const recentLogs = STATE.logs.filter(l => { 
+                    const d = (l.jam_mulai_sewa||'').substring(0,10); 
+                    return d === todayStr || d === yestStr || d === tomorrowStr; 
+                });
+                
                 const filtered = recentLogs.filter(l => cabangFilter === 'ALL' || l.cabang_arena === cabangFilter || l.cabang_arena === (cabangFilter === 'Banda Aceh' ? 'Banda' : cabangFilter));
                 
                 return filtered.reverse().map(l => {
@@ -334,7 +321,7 @@
                 await APP.loadDashboard();
             },
 
-            // --- INPUT FORM (FIX CABANG BANDA) ---
+            // --- INPUT FORM ---
             renderInputForm: () => {
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 const b = STATE.user.branch || ''; 
@@ -366,16 +353,10 @@
                 if(!unitSel) return;
                 
                 let opts = '';
-                // Set value unit HANYA BERUPA ANGKA agar masuk sempurna ke DB
-                if(branch === 'Sabang') {
-                    opts = '<option value="1">Unit 1</option><option value="2">Unit 2</option>';
-                } else if(branch === 'Banda') {
-                    opts = '<option value="3">Unit 3</option><option value="4">Unit 4</option><option value="5">Unit 5</option><option value="6">Unit 6</option><option value="7">Unit 7</option>';
-                } else if(branch === 'Aceh Timur') {
-                    opts = '<option value="8">Unit 8</option><option value="9">Unit 9</option>';
-                } else {
-                    opts = '<option value="1">Unit 1</option>';
-                }
+                if(branch === 'Sabang') opts = '<option value="1">Unit 1</option><option value="2">Unit 2</option>';
+                else if(branch === 'Banda') opts = '<option value="3">Unit 3</option><option value="4">Unit 4</option><option value="5">Unit 5</option><option value="6">Unit 6</option><option value="7">Unit 7</option>';
+                else if(branch === 'Aceh Timur') opts = '<option value="8">Unit 8</option><option value="9">Unit 9</option>';
+                else opts = '<option value="1">Unit 1</option>';
                 unitSel.innerHTML = opts;
             },
             updatePrice: () => {
@@ -407,7 +388,7 @@
                         paket: `${finalName} (${type})`, jam_mulai_sewa: formattedDate
                     });
                     await APP.loadDashboard();
-                    APP.switchTab('logs'); // Otomatis pindah ke logs setelah simpan
+                    APP.switchTab('logs'); 
                 } catch (error) {
                     alert("Gagal memproses input. Mohon coba lagi.");
                     APP.hideLoader();
@@ -438,18 +419,8 @@
                 <div class="mario-card p-6 text-center animate-pop">
                     <h2 class="text-xl font-black mb-4 border-b-4 border-black pb-2">MESIN CETAK LAPORAN</h2>
                     <div class="space-y-3 text-left mb-6">
-                        <div>
-                            <label class="text-xs font-bold">PILIH CABANG</label>
-                            <select id="report-branch" class="mario-input p-2 text-sm">
-                                <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold">PILIH BULAN</label>
-                            <select id="report-month" class="mario-input p-2 text-sm">
-                                ${APP.generateMonthOptions()}
-                            </select>
-                        </div>
+                        <div><label class="text-xs font-bold">PILIH CABANG</label><select id="report-branch" class="mario-input p-2 text-sm"><option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option></select></div>
+                        <div><label class="text-xs font-bold">PILIH BULAN</label><select id="report-month" class="mario-input p-2 text-sm">${APP.generateMonthOptions()}</select></div>
                     </div>
                     <button onclick="APP.printReport()" class="w-full mario-btn bg-black text-white p-4">🖨️ CETAK LAPORAN A4</button>
                 </div>
@@ -460,14 +431,12 @@
                 const monthLabel = document.getElementById('report-month').options[document.getElementById('report-month').selectedIndex].text;
 
                 let rowHTML = ''; let totalOmset = 0;
-                
                 STATE.logs.forEach(l => {
                     const dateStr = (l.jam_mulai_sewa||'').substring(0,7); 
                     const matchBranch = branch === 'ALL' || l.cabang_arena === branch || (branch === 'Banda' && l.cabang_arena === 'Banda');
-                    
                     if (matchBranch && dateStr === month && l.status_unit_arena !== 'batal') {
                         totalOmset += Number(l.tagihan_arena);
-                        rowHTML += `<tr><td style="border:1px solid #000; padding:8px;">${(l.jam_mulai_sewa||'').substring(0,10)}</td><td style="border:1px solid #000; padding:8px;">${l.cabang_arena} / Unit ${l.unit_arena}</td><td style="border:1px solid #000; padding:8px;">${l.nama_pelanggan_arena}</td><td style="border:1px solid #000; padding:8px;">${l.paket_arena}</td><td style="border:1px solid #000; padding:8px; text-align:right;">${APP.formatRp(l.tagihan_arena)}</td></tr>`;
+                        rowHTML += `<tr><td style="border:1px solid #000; padding:8px;">${(l.jam_mulai_sewa||'').substring(0,10)}</td><td style="border:1px solid #000; padding:8px;">${l.cabang_arena} / U${l.unit_arena}</td><td style="border:1px solid #000; padding:8px;">${l.nama_pelanggan_arena}</td><td style="border:1px solid #000; padding:8px;">${l.paket_arena}</td><td style="border:1px solid #000; padding:8px; text-align:right;">${APP.formatRp(l.tagihan_arena)}</td></tr>`;
                     }
                 });
 
@@ -477,7 +446,7 @@
                     <p style="margin-bottom:10px; font-weight:bold;">Dicetak Oleh: ${STATE.user.username.toUpperCase()}</p>
                     <table style="width:100%; border-collapse: collapse; text-align:left; font-size:12px;">
                         <tr style="background:#eee;"><th style="border:1px solid #000; padding:8px;">Tanggal</th><th style="border:1px solid #000; padding:8px;">Unit</th><th style="border:1px solid #000; padding:8px;">Pelanggan</th><th style="border:1px solid #000; padding:8px;">Sewa</th><th style="border:1px solid #000; padding:8px; text-align:right;">Tagihan</th></tr>
-                        ${rowHTML || '<tr><td colspan="5" style="text-align:center; padding:10px;">Tidak ada data untuk periode ini.</td></tr>'}
+                        ${rowHTML || '<tr><td colspan="5" style="text-align:center; padding:10px;">Tidak ada data.</td></tr>'}
                         <tr><td colspan="4" style="border:1px solid #000; padding:10px; text-align:right; font-weight:bold; font-size:14px;">TOTAL OMSET (KOTOR)</td><td style="border:1px solid #000; padding:10px; text-align:right; font-weight:bold; font-size:14px;">${APP.formatRp(totalOmset)}</td></tr>
                     </table>
                 `;
