@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASIR ARENA PLAYBOX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SUPER APP - ARENA PLAYBOX</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,6 +14,7 @@
             --mario-orange: #FF6B00;
             --mario-black: #000000;
             --mario-yellow: #FFD700;
+            --mario-bg: #FFE8B3;
         }
         
         body {
@@ -23,14 +24,13 @@
             -webkit-font-smoothing: antialiased;
             background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px);
             background-size: 20px 20px;
-            overflow-x: hidden;
         }
 
         .mario-card {
             background-color: white;
             border: 4px solid var(--mario-black);
             border-radius: 16px;
-            box-shadow: 8px 8px 0px 0px var(--mario-black);
+            box-shadow: 6px 6px 0px 0px var(--mario-black);
         }
 
         .mario-btn {
@@ -40,10 +40,7 @@
             box-shadow: 4px 4px 0px 0px var(--mario-black);
             transition: all 0.1s ease-in-out;
             font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            text-align: center;
             cursor: pointer;
         }
 
@@ -52,151 +49,209 @@
             box-shadow: 0px 0px 0px 0px var(--mario-black);
         }
 
-        .mario-btn-yellow { background-color: var(--mario-yellow); }
-        .mario-btn-gray { background-color: #E5E7EB; color: #6B7280; box-shadow: 2px 2px 0px 0px var(--mario-black); }
-
         .mario-input {
             width: 100%;
             background-color: #F3F4F6;
             border: 3px solid var(--mario-black);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             font-weight: 600;
             outline: none;
         }
-        
-        .mario-input:focus {
-            background-color: #ffffff;
-            border-color: var(--mario-orange);
-        }
+        .mario-input:focus { border-color: var(--mario-orange); background-color: white; }
 
         .hidden { display: none !important; }
-        .animate-pop { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-pop { animation: popIn 0.3s forwards; }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        @keyframes popIn {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; border-top: 4px solid var(--mario-black);
+            display: flex; justify-content: space-around; padding: 10px 0; z-index: 50;
+        }
+        .nav-item { flex: 1; text-align: center; font-size: 12px; font-weight: bold; color: gray; }
+        .nav-item.active { color: var(--mario-orange); text-shadow: 1px 1px 0px black; }
+        .nav-icon { font-size: 24px; display: block; margin-bottom: 2px; }
+
+        /* Loader */
+        #loader {
+            position: fixed; inset: 0; background: rgba(255,107,0,0.9); z-index: 100;
+            display: flex; flex-direction: column; justify-content: center; items-center;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 6px solid var(--mario-black);
+            border-top-color: var(--mario-yellow); border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Print A4 Area */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; padding: 20px; }
+            .mario-card, body { border: none; box-shadow: none; background: white; }
         }
     </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen flex flex-col items-center">
+<body class="pb-20">
 
-    <div id="app" class="max-w-md w-full mx-auto animate-pop pb-10">
+    <div id="loader" class="hidden items-center">
+        <div class="spinner mb-4"></div>
+        <h2 id="loader-text" class="text-2xl font-black text-white" style="text-shadow: 2px 2px 0px #000;">MEMPROSES...</h2>
+    </div>
+
+    <div id="app" class="max-w-md mx-auto p-4 animate-pop">
         
-        <header class="text-center mb-6">
-            <h1 class="text-3xl font-black text-white uppercase" style="text-shadow: 3px 3px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 1px 1px 0px #000;">
-                SISTEM KASIR
-            </h1>
-            <div class="mt-2 bg-black text-yellow-400 px-4 py-1 rounded-lg border-2 border-white inline-block">
-                <p class="text-sm font-bold tracking-wide">ARENA PLAYBOX</p>
+        <header class="text-center mb-6 mt-4">
+            <h1 class="text-3xl font-black text-white uppercase" style="text-shadow: 3px 3px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 1px 1px 0px #000;">ARENA PLAYBOX</h1>
+            <div id="user-badge" class="hidden mt-2 bg-black text-yellow-400 px-4 py-1 rounded-lg border-2 border-white inline-block">
+                <p id="user-info-text" class="text-sm font-bold tracking-wide">ROLE | CABANG</p>
             </div>
         </header>
 
-        <section id="region-step" class="mario-card p-6 relative z-10">
-            <h2 class="text-xl font-bold mb-4 text-center border-b-4 border-black pb-2">KASIR CABANG:</h2>
-            <div class="grid grid-cols-1 gap-4">
-                <button onclick="APP_LOGIC.selectRegion('Sabang')" class="mario-btn p-4 text-lg">📍 SABANG</button>
-                <button onclick="APP_LOGIC.selectRegion('Banda Aceh')" class="mario-btn mario-btn-yellow p-4 text-lg">📍 BANDA ACEH</button>
-                <button onclick="APP_LOGIC.selectRegion('Aceh Timur')" class="mario-btn p-4 text-lg">📍 ACEH TIMUR</button>
+        <section id="view-login" class="mario-card p-6">
+            <h2 class="text-2xl font-black mb-6 text-center border-b-4 border-black pb-2">LOGIN SISTEM</h2>
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="block font-bold mb-1">USERNAME</label>
+                    <input type="text" id="login-user" required class="mario-input">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">PASSWORD</label>
+                    <input type="password" id="login-pass" required class="mario-input">
+                </div>
+                <button type="submit" class="w-full mario-btn bg-[#FFD700] p-4 text-xl mt-4">🚀 MASUK</button>
+            </form>
+        </section>
+
+        <section id="view-admin" class="hidden">
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="mario-card p-3 bg-[#FFE8B3] text-center">
+                    <p class="text-xs font-bold text-gray-600">OMSET HARI INI</p>
+                    <p id="admin-omset-today" class="text-xl font-black text-[#FF6B00]">Rp 0</p>
+                </div>
+                <div class="mario-card p-3 text-center">
+                    <p class="text-xs font-bold text-gray-600">OMSET KEMARIN</p>
+                    <p id="admin-omset-yesterday" class="text-xl font-black">Rp 0</p>
+                </div>
+            </div>
+            <div id="admin-form-container"></div>
+            <button onclick="APP.logout()" class="w-full mario-btn bg-red-500 text-white p-3 mt-6">🚪 LOGOUT</button>
+        </section>
+
+        <section id="view-manager" class="hidden">
+            <div id="manager-content"></div>
+
+            <div class="bottom-nav">
+                <div class="nav-item active" onclick="APP.switchTab('dashboard')" id="tab-dashboard">
+                    <span class="nav-icon">🎮</span>LOGS
+                </div>
+                <div class="nav-item" onclick="APP.switchTab('input')" id="tab-input">
+                    <span class="nav-icon">📝</span>INPUT
+                </div>
+                <div class="nav-item" onclick="APP.switchTab('expense')" id="tab-expense">
+                    <span class="nav-icon">💸</span>EXPENSE
+                </div>
+                <div class="nav-item" onclick="APP.switchTab('report')" id="tab-report">
+                    <span class="nav-icon">📊</span>REPORT
+                </div>
             </div>
         </section>
 
-        <section id="booking-step" class="hidden relative z-10">
-            <div class="flex items-center justify-between mb-4">
-                <button onclick="location.reload()" class="mario-btn bg-white px-4 py-2 text-sm mr-3">← GANTI CABANG</button>
-                <span class="bg-black text-white px-3 py-1 rounded-full text-xs font-bold border-2 border-white" id="region-badge">BANDA ACEH</span>
+        <section id="view-owner" class="hidden">
+            <div class="mario-card p-4 bg-black text-white text-center mb-4">
+                <p class="text-sm font-bold text-gray-400">OMSET BULAN INI</p>
+                <p id="owner-omset-month" class="text-4xl font-black text-yellow-400">Rp 0</p>
+            </div>
+            <div class="mario-card p-4 bg-[#FFE8B3] text-center mb-6">
+                <p class="text-sm font-bold text-gray-600">OMSET HARI INI</p>
+                <p id="owner-omset-today" class="text-2xl font-black text-[#FF6B00]">Rp 0</p>
             </div>
 
-            <div class="mario-card p-6">
-                <h2 class="text-2xl font-black mb-6 text-center uppercase border-b-4 border-black pb-2">INPUT RENTAL</h2>
-
-                <form id="orderForm" class="space-y-4">
-                    
-                    <div>
-                        <label class="block font-bold mb-1 text-sm">NAMA KASIR (ADMIN)</label>
-                        <input type="text" id="admin_name" required class="mario-input" placeholder="Nama kamu...">
-                    </div>
-
-                    <hr class="border-black border-2 my-4">
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block font-bold mb-1 text-sm">NAMA PELANGGAN</label>
-                            <input type="text" id="name" required class="mario-input" placeholder="Nama player...">
-                        </div>
-                        <div>
-                            <label class="block font-bold mb-1 text-sm">NO WHATSAPP</label>
-                            <input type="number" id="wa" required class="mario-input" placeholder="08xxx...">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 mt-4">
-                        <div>
-                            <label class="block font-bold mb-1 text-sm">JENIS SEWA</label>
-                            <div class="relative">
-                                <select id="type-selector" onchange="APP_LOGIC.switchType(this.value)" class="mario-input appearance-none cursor-pointer">
-                                    <option value="Paket">Paket</option>
-                                    <option value="Regular">Regular</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 font-black">▼</div>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block font-bold mb-1 text-sm">PILIH UNIT</label>
-                            <div class="relative">
-                                <select id="unit" class="mario-input appearance-none cursor-pointer">
-                                    <option value="Unit 1">Unit 1</option>
-                                    <option value="Unit 2">Unit 2</option>
-                                    <option value="Unit 3">Unit 3</option>
-                                    <option value="Unit 4">Unit 4</option>
-                                    <option value="Unit 5">Unit 5</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 font-black">▼</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block font-bold mb-1 text-sm">PILIHAN AMUNISI (<span id="type-label">Paket</span>)</label>
-                        <div class="relative">
-                            <select id="product" onchange="APP_LOGIC.updatePriceUI()" class="mario-input appearance-none cursor-pointer">
-                                </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 font-black">▼</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block font-bold mb-1 text-sm">STATUS PEMBAYARAN</label>
-                        <div class="relative">
-                            <select id="pembayaran" class="mario-input appearance-none cursor-pointer">
-                                <option value="Lunas">✅ LUNAS</option>
-                                <option value="Belum">❌ BELUM LUNAS</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 font-black">▼</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-black text-white p-4 rounded-xl border-4 border-yellow-400 mt-6 text-center">
-                        <p class="font-bold text-gray-300 text-sm">TOTAL TAGIHAN:</p>
-                        <p id="real-price" class="text-3xl font-black text-yellow-400 drop-shadow-md">Rp 0</p>
-                    </div>
-
-                    <button type="submit" id="submit-btn" class="w-full mario-btn mario-btn-yellow p-4 text-xl mt-6 uppercase">
-                        💾 SIMPAN DATA RENTAL
-                    </button>
-                </form>
+            <div class="mb-4">
+                <select id="owner-filter-cabang" onchange="APP.renderOwnerLogs()" class="mario-input">
+                    <option value="ALL">Semua Cabang</option>
+                    <option value="Sabang">Sabang</option>
+                    <option value="Banda Aceh">Banda Aceh</option>
+                    <option value="Aceh Timur">Aceh Timur</option>
+                </select>
             </div>
+
+            <h3 class="font-black text-white mb-2" style="text-shadow: 1px 1px 0px #000;">RIWAYAT TRANSAKSI:</h3>
+            <div id="owner-log-list" class="space-y-3 pb-6"></div>
+            <button onclick="APP.logout()" class="w-full mario-btn bg-red-500 text-white p-3 mt-4">🚪 LOGOUT</button>
         </section>
+
     </div>
 
+    <div id="template-rental-form" class="hidden">
+        <div class="mario-card p-5">
+            <h2 class="text-xl font-black mb-4 text-center border-b-4 border-black pb-2">INPUT RENTAL</h2>
+            <form id="form-rental" class="space-y-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold mb-1">PELANGGAN</label>
+                        <input type="text" id="rent-name" required class="mario-input" placeholder="Nama...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">NO WA</label>
+                        <input type="number" id="rent-wa" required class="mario-input" placeholder="08xxx...">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold mb-1">TIPE SEWA</label>
+                        <select id="rent-type" onchange="APP.updateFormPricing()" class="mario-input">
+                            <option value="Paket">Paket</option>
+                            <option value="Regular">Regular</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">UNIT</label>
+                        <select id="rent-unit" class="mario-input">
+                            <option value="Unit 1">Unit 1</option>
+                            <option value="Unit 2">Unit 2</option>
+                            <option value="Unit 3">Unit 3</option>
+                            <option value="Unit 4">Unit 4</option>
+                            <option value="Unit 5">Unit 5</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1">AMUNISI</label>
+                    <select id="rent-product" onchange="APP.updateFormPricing()" class="mario-input"></select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1">PEMBAYARAN</label>
+                    <select id="rent-payment" class="mario-input">
+                        <option value="Lunas">✅ LUNAS</option>
+                        <option value="Belum">❌ BELUM LUNAS</option>
+                    </select>
+                </div>
+
+                <div class="bg-black p-3 rounded-lg border-2 border-yellow-400 text-center">
+                    <p class="text-xs font-bold text-gray-300">TOTAL</p>
+                    <p id="rent-price-display" class="text-2xl font-black text-yellow-400">Rp 0</p>
+                </div>
+
+                <button type="submit" class="w-full mario-btn bg-yellow-400 p-3 text-lg">💾 SIMPAN TRANSAKSI</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="print-area" class="hidden"></div>
+
     <script>
-        // ==========================================
-        // 1. CONFIGURATION (URL WEBHOOK N8N)
-        // ==========================================
+        // =====================================
+        // 1. CONFIGURATION & STATE
+        // =====================================
         const CONFIG = {
-            // PASTIKAN URL INI BENAR (Sesuai dengan Webhook GET/POST n8n Abang)
-            WEBHOOK_URL: "https://hook.eu2.make.com/xxxxxxxxxxxxxxx", // GANTI DENGAN URL WEBHOOK N8N ABANG
-            data: {
+            WEBHOOK_URL: "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/86cee1b8-b00d-4aa6-8ff4-23735dc9afe1",
+            PRICING: {
                 Paket: [
                     { name: "Paket Malam", time: "00:00 - 10:00", price: 50000 },
                     { name: "Paket Pagi", time: "10:00 - 17:00", price: 45000 },
@@ -211,111 +266,332 @@
             }
         };
 
-        // ==========================================
-        // 2. APP LOGIC (SISTEM KASIR)
-        // ==========================================
-        const APP_LOGIC = {
-            state: {
-                region: "",
-                type: "Paket",
-                selectedItem: null
-            },
+        const STATE = {
+            user: null, // { username, role, branch }
+            logs: [],
+            expenses: [],
+            selectedRentPrice: 0,
+            activeTab: 'dashboard'
+        };
 
-            formatRupiah: (number) => {
-                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-            },
-
-            selectRegion: (regionName) => {
-                APP_LOGIC.state.region = regionName;
-                document.getElementById('region-step').classList.add('hidden');
-                document.getElementById('booking-step').classList.remove('hidden');
-                document.getElementById('booking-step').classList.add('animate-pop');
-                document.getElementById('region-badge').innerText = regionName.toUpperCase();
-                
-                APP_LOGIC.updateDropdown();
-            },
-
-            switchType: (type) => {
-                APP_LOGIC.state.type = type;
-                document.getElementById('type-label').innerText = type;
-                APP_LOGIC.updateDropdown();
-            },
-
-            updateDropdown: () => {
-                const select = document.getElementById('product');
-                const items = CONFIG.data[APP_LOGIC.state.type];
-                
-                select.innerHTML = items.map((item, index) => {
-                    const timeLabel = item.time !== "Bebas" ? ` (${item.time})` : "";
-                    return `<option value="${index}">${item.name}${timeLabel}</option>`;
-                }).join('');
-                
-                APP_LOGIC.updatePriceUI();
-            },
-
-            updatePriceUI: () => {
-                const select = document.getElementById('product');
-                const selectedIndex = select.value;
-                const item = CONFIG.data[APP_LOGIC.state.type][selectedIndex];
-                
-                if (item) {
-                    APP_LOGIC.state.selectedItem = item;
-                    document.getElementById('real-price').innerText = APP_LOGIC.formatRupiah(item.price);
+        // =====================================
+        // 2. CORE LOGIC (APP)
+        // =====================================
+        const APP = {
+            init: () => {
+                document.getElementById('form-login').addEventListener('submit', APP.handleLogin);
+                const savedUser = localStorage.getItem('arena_user');
+                if (savedUser) {
+                    STATE.user = JSON.parse(savedUser);
+                    APP.loadDashboard();
                 }
             },
 
-            submitForm: async (e) => {
-                e.preventDefault();
-                
-                const btn = document.getElementById('submit-btn');
-                btn.innerText = "⏳ MEMPROSES...";
-                btn.disabled = true;
+            formatRp: (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0),
+            
+            showLoader: (text) => {
+                document.getElementById('loader-text').innerText = text;
+                document.getElementById('loader').classList.remove('hidden');
+            },
+            hideLoader: () => document.getElementById('loader').classList.add('hidden'),
 
-                const item = APP_LOGIC.state.selectedItem;
-                const now = new Date();
-                
-                // PAYLOAD SESUAI DENGAN NODE n8n "input_rental"
-                const payload = {
-                    action: "input_rental",
-                    name: document.getElementById('name').value,
-                    wa: document.getElementById('wa').value,
-                    price: item.price, // Harga dikirim berupa angka
-                    admin_name: document.getElementById('admin_name').value,
-                    branch: APP_LOGIC.state.region,
-                    unit: document.getElementById('unit').value,
-                    paket: `${item.name} (${APP_LOGIC.state.type})`,
-                    status_unit: "Aktif",
-                    jam_mulai_sewa: now.toLocaleString('id-ID'),
-                    pembayaran: document.getElementById('pembayaran').value
-                };
-
+            callAPI: async (payload) => {
                 try {
-                    const response = await fetch(CONFIG.WEBHOOK_URL, {
+                    const res = await fetch(CONFIG.WEBHOOK_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-
-                    if(response.ok) {
-                        alert("✅ Data berhasil disimpan ke Sistem!");
-                        // Reset form ringan tanpa reload agar nama kasir & cabang tetap tersimpan
-                        document.getElementById('name').value = '';
-                        document.getElementById('wa').value = '';
-                    } else {
-                        alert("❌ Gagal menyimpan data. Cek koneksi atau Webhook n8n.");
-                    }
-                } catch (error) {
-                    alert("❌ Terjadi kesalahan jaringan.");
-                    console.error(error);
-                } finally {
-                    btn.innerText = "💾 SIMPAN DATA RENTAL";
-                    btn.disabled = false;
+                    return await res.json();
+                } catch (e) {
+                    console.error(e);
+                    return null;
                 }
+            },
+
+            // --- AUTH ---
+            handleLogin: async (e) => {
+                e.preventDefault();
+                const u = document.getElementById('login-user').value;
+                const p = document.getElementById('login-pass').value;
+                
+                APP.showLoader('LOGIN...');
+                // Simulasi Data Backend karena respons n8n mungkin array
+                const data = await APP.callAPI({ action: 'login', username: u, password: p });
+                APP.hideLoader();
+
+                // Deteksi Respon Login (Asumsi respons array dari NocoDB/Sheets)
+                if (data && data.length > 0 && data[0].role) {
+                    const userObj = {
+                        username: data[0].id_user_arena || u,
+                        role: data[0].role.toLowerCase(),
+                        branch: data[0].cabang || 'Banda Aceh' // Fallback
+                    };
+                    localStorage.setItem('arena_user', JSON.stringify(userObj));
+                    STATE.user = userObj;
+                    APP.loadDashboard();
+                } else {
+                    alert('❌ Username/Password Salah atau Gagal Koneksi.');
+                }
+            },
+
+            logout: () => {
+                localStorage.removeItem('arena_user');
+                STATE.user = null;
+                location.reload();
+            },
+
+            // --- ROUTING VIEWS ---
+            loadDashboard: async () => {
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('user-badge').classList.remove('hidden');
+                document.getElementById('user-info-text').innerText = `${STATE.user.role.toUpperCase()} | ${STATE.user.branch}`;
+                
+                APP.showLoader('TARIK DATA...');
+                const data = await APP.callAPI({ action: 'get_dashboard', role: STATE.user.role, branch: STATE.user.branch });
+                APP.hideLoader();
+
+                if (data) {
+                    // Filter raw arrays into STATE based on available columns
+                    STATE.logs = Array.isArray(data) ? data.filter(d => d.tagihan_arena) : [];
+                    STATE.expenses = Array.isArray(data) ? data.filter(d => d.pengeluaran_arena) : [];
+                }
+
+                if (STATE.user.role === 'admin') APP.renderAdmin();
+                else if (STATE.user.role === 'manager') APP.renderManager();
+                else if (STATE.user.role === 'share holder' || STATE.user.role === 'owner') APP.renderOwner();
+            },
+
+            // --- ADMIN VIEW ---
+            renderAdmin: () => {
+                document.getElementById('view-admin').classList.remove('hidden');
+                const formHTML = document.getElementById('template-rental-form').innerHTML;
+                document.getElementById('admin-form-container').innerHTML = formHTML;
+                
+                // Kalkulasi Omset (Hanya cabang Admin)
+                const today = new Date().toISOString().split('T')[0];
+                let d = new Date(); d.setDate(d.getDate() - 1);
+                const yesterday = d.toISOString().split('T')[0];
+
+                let omsetToday = 0; let omsetYest = 0;
+                STATE.logs.forEach(log => {
+                    if (log.cabang_arena === STATE.user.branch) {
+                        const date = (log.jam_mulai_sewa || '').split(' ')[0];
+                        if (date === today) omsetToday += Number(log.tagihan_arena);
+                        if (date === yesterday) omsetYest += Number(log.tagihan_arena);
+                    }
+                });
+
+                document.getElementById('admin-omset-today').innerText = APP.formatRp(omsetToday);
+                document.getElementById('admin-omset-yesterday').innerText = APP.formatRp(omsetYest);
+
+                APP.initRentalForm();
+            },
+
+            // --- MANAGER VIEW ---
+            renderManager: () => {
+                document.getElementById('view-manager').classList.remove('hidden');
+                APP.switchTab('dashboard');
+            },
+
+            switchTab: (tab) => {
+                STATE.activeTab = tab;
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                document.getElementById(`tab-${tab}`).classList.add('active');
+                
+                const content = document.getElementById('manager-content');
+                
+                if (tab === 'dashboard') {
+                    content.innerHTML = `<h2 class="text-xl font-black text-white mb-4">LOG UNIT (${STATE.user.branch})</h2>
+                        <div class="space-y-4 pb-10">${APP.generateLogCards(true)}</div>`;
+                } else if (tab === 'input') {
+                    content.innerHTML = document.getElementById('template-rental-form').innerHTML;
+                    APP.initRentalForm();
+                } else if (tab === 'expense') {
+                    content.innerHTML = `
+                        <div class="mario-card p-5">
+                            <h2 class="text-xl font-black mb-4 border-b-4 border-black pb-2">INPUT PENGELUARAN</h2>
+                            <form id="form-expense" class="space-y-4" onsubmit="APP.submitExpense(event)">
+                                <div><label class="block text-xs font-bold mb-1">NAMA ITEM</label><input type="text" id="exp-name" required class="mario-input"></div>
+                                <div><label class="block text-xs font-bold mb-1">BIAYA (Rp)</label><input type="number" id="exp-amount" required class="mario-input"></div>
+                                <div><label class="block text-xs font-bold mb-1">TANGGAL</label><input type="date" id="exp-date" required class="mario-input" value="${new Date().toISOString().split('T')[0]}"></div>
+                                <button type="submit" class="w-full mario-btn bg-red-500 text-white p-3">💸 SIMPAN PENGELUARAN</button>
+                            </form>
+                        </div>
+                    `;
+                } else if (tab === 'report') {
+                    content.innerHTML = `
+                        <div class="mario-card p-5 text-center">
+                            <h2 class="text-xl font-black mb-4">CETAK LAPORAN</h2>
+                            <button onclick="APP.printReport()" class="w-full mario-btn bg-black text-white p-4 text-lg mb-4">🖨️ CETAK A4 (HARI INI)</button>
+                            <button onclick="APP.logout()" class="w-full mario-btn bg-gray-200 text-black p-3 mt-4">🚪 LOGOUT</button>
+                        </div>
+                    `;
+                }
+            },
+
+            // --- OWNER VIEW ---
+            renderOwner: () => {
+                document.getElementById('view-owner').classList.remove('hidden');
+                APP.renderOwnerLogs();
+            },
+            
+            renderOwnerLogs: () => {
+                const filter = document.getElementById('owner-filter-cabang').value;
+                const today = new Date().toISOString().split('T')[0];
+                const thisMonth = today.substring(0,7); // YYYY-MM
+
+                let omsetToday = 0; let omsetMonth = 0;
+                let logHTML = '';
+
+                STATE.logs.forEach(log => {
+                    if (filter === 'ALL' || log.cabang_arena === filter) {
+                        const dateRaw = log.jam_mulai_sewa || '';
+                        const date = dateRaw.split(' ')[0];
+                        const month = date.substring(0,7);
+
+                        if (date === today) omsetToday += Number(log.tagihan_arena);
+                        if (month === thisMonth) omsetMonth += Number(log.tagihan_arena);
+
+                        // Render top 20 latest
+                        logHTML += `
+                            <div class="bg-white p-3 rounded-xl border-2 border-black flex justify-between items-center shadow-[2px_2px_0px_#000]">
+                                <div><p class="font-bold text-sm">${log.nama_pelanggan_arena} (${log.unit_arena})</p><p class="text-xs text-gray-500">${log.paket_arena} | ${dateRaw}</p></div>
+                                <div class="font-black text-green-600">${APP.formatRp(log.tagihan_arena)}</div>
+                            </div>
+                        `;
+                    }
+                });
+
+                document.getElementById('owner-omset-today').innerText = APP.formatRp(omsetToday);
+                document.getElementById('owner-omset-month').innerText = APP.formatRp(omsetMonth);
+                document.getElementById('owner-log-list').innerHTML = logHTML || '<p class="text-center text-white">Belum ada transaksi.</p>';
+            },
+
+            // --- RENTAL FORM LOGIC ---
+            initRentalForm: () => {
+                APP.updateFormPricing();
+                const form = document.getElementById('form-rental');
+                if(form) form.addEventListener('submit', APP.submitRental);
+            },
+            updateFormPricing: () => {
+                const type = document.getElementById('rent-type').value;
+                const sel = document.getElementById('rent-product');
+                const items = CONFIG.PRICING[type];
+                
+                sel.innerHTML = items.map((item, idx) => `<option value="${idx}">${item.name}</option>`).join('');
+                STATE.selectedRentPrice = items[0].price;
+                document.getElementById('rent-price-display').innerText = APP.formatRp(STATE.selectedRentPrice);
+                
+                sel.onchange = (e) => {
+                    STATE.selectedRentPrice = items[e.target.value].price;
+                    document.getElementById('rent-price-display').innerText = APP.formatRp(STATE.selectedRentPrice);
+                };
+            },
+            submitRental: async (e) => {
+                e.preventDefault();
+                const selProd = document.getElementById('rent-product');
+                const prodName = selProd.options[selProd.selectedIndex].text;
+
+                const payload = {
+                    action: "input_rental",
+                    name: document.getElementById('rent-name').value,
+                    wa: document.getElementById('rent-wa').value,
+                    price: STATE.selectedRentPrice,
+                    admin_name: STATE.user.username,
+                    branch: STATE.user.branch,
+                    unit: document.getElementById('rent-unit').value,
+                    paket: `${prodName} (${document.getElementById('rent-type').value})`,
+                    status_unit: "booked",
+                    jam_mulai_sewa: new Date().toISOString().replace('T', ' ').substring(0,19),
+                    pembayaran: document.getElementById('rent-payment').value
+                };
+
+                APP.showLoader('MENYIMPAN...');
+                await APP.callAPI(payload);
+                await APP.loadDashboard(); // Refresh data
+            },
+
+            // --- MANAGER ACTIONS ---
+            generateLogCards: () => {
+                let html = '';
+                STATE.logs.forEach(log => {
+                    if (log.cabang_arena === STATE.user.branch) {
+                        const bgStat = log.status_unit_arena === 'playing' ? 'bg-green-100' : log.status_unit_arena === 'finished' ? 'bg-gray-200' : 'bg-white';
+                        html += `
+                        <div class="mario-card p-4 ${bgStat} text-sm">
+                            <div class="flex justify-between border-b-2 border-black pb-2 mb-2">
+                                <span class="font-black">${log.unit_arena}</span>
+                                <span class="font-bold text-gray-500">${log.jam_mulai_sewa}</span>
+                            </div>
+                            <p class="font-bold text-lg">${log.nama_pelanggan_arena} <a href="${log.link_wa_pelanggan_arena}" target="_blank" class="text-blue-500">💬</a></p>
+                            <p class="mb-3">${log.paket_arena} - ${APP.formatRp(log.tagihan_arena)}</p>
+                            
+                            <div class="flex gap-2">
+                                <select onchange="APP.updateStatus('${log.id}', this.value, '${log.pembayaran}')" class="mario-input p-2 text-xs">
+                                    <option value="booked" ${log.status_unit_arena==='booked'?'selected':''}>BOOKED</option>
+                                    <option value="playing" ${log.status_unit_arena==='playing'?'selected':''}>PLAYING</option>
+                                    <option value="finished" ${log.status_unit_arena==='finished'?'selected':''}>FINISHED</option>
+                                </select>
+                                <button onclick="APP.updateStatus('${log.id}', '${log.status_unit_arena}', '${log.pembayaran === 'Lunas' ? 'Belum' : 'Lunas'}')" class="mario-btn p-2 text-xs flex-1 ${log.pembayaran==='Lunas'?'bg-green-400':'bg-red-400 text-white'}">
+                                    ${log.pembayaran==='Lunas'?'✅ LUNAS':'❌ BELUM'}
+                                </button>
+                            </div>
+                        </div>`;
+                    }
+                });
+                return html || '<p class="text-center text-white">Tidak ada data unit aktif.</p>';
+            },
+
+            updateStatus: async (id, stat, bayar) => {
+                APP.showLoader('UPDATE...');
+                await APP.callAPI({ action: 'update_status', row_id: id, status_unit: stat, pembayaran: bayar });
+                await APP.loadDashboard();
+            },
+
+            submitExpense: async (e) => {
+                e.preventDefault();
+                APP.showLoader('MENYIMPAN PENGELUARAN...');
+                await APP.callAPI({
+                    action: 'add_expense',
+                    expense_name: document.getElementById('exp-name').value,
+                    expense_amount: document.getElementById('exp-amount').value,
+                    expense_date: document.getElementById('exp-date').value,
+                    branch: STATE.user.branch
+                });
+                await APP.loadDashboard();
+            },
+
+            // --- REPORT A4 PRINT ---
+            printReport: () => {
+                const today = new Date().toISOString().split('T')[0];
+                let rowHTML = ''; let totalOmset = 0;
+                
+                STATE.logs.forEach(log => {
+                    if (log.cabang_arena === STATE.user.branch && (log.jam_mulai_sewa||'').includes(today)) {
+                        totalOmset += Number(log.tagihan_arena);
+                        rowHTML += `<tr><td style="border:1px solid #000; padding:5px;">${log.unit_arena}</td><td style="border:1px solid #000; padding:5px;">${log.nama_pelanggan_arena}</td><td style="border:1px solid #000; padding:5px;">${log.paket_arena}</td><td style="border:1px solid #000; padding:5px;">${APP.formatRp(log.tagihan_arena)}</td></tr>`;
+                    }
+                });
+
+                document.getElementById('print-area').innerHTML = `
+                    <h1 style="text-align:center; font-size:24px; margin-bottom:10px;">LAPORAN HARIAN - ARENA PLAYBOX</h1>
+                    <p style="text-align:center; margin-bottom:20px;">Cabang: ${STATE.user.branch} | Tanggal: ${today}</p>
+                    <table style="width:100%; border-collapse: collapse; text-align:left;">
+                        <tr style="background:#eee;"><th style="border:1px solid #000; padding:5px;">Unit</th><th style="border:1px solid #000; padding:5px;">Pelanggan</th><th style="border:1px solid #000; padding:5px;">Paket</th><th style="border:1px solid #000; padding:5px;">Nominal</th></tr>
+                        ${rowHTML}
+                        <tr><td colspan="3" style="border:1px solid #000; padding:5px; text-align:right; font-weight:bold;">TOTAL OMSET</td><td style="border:1px solid #000; padding:5px; font-weight:bold;">${APP.formatRp(totalOmset)}</td></tr>
+                    </table>
+                `;
+                
+                document.getElementById('print-area').classList.remove('hidden');
+                window.print();
+                document.getElementById('print-area').classList.add('hidden');
             }
         };
 
-        // Inisialisasi Event Listener
-        document.getElementById('orderForm').addEventListener('submit', APP_LOGIC.submitForm);
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', APP.init);
 
     </script>
 </body>
