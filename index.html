@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V5.0 - Full Auto Edition</title>
+    <title>ARENA SYSTEM V5.2 - Omni Manager Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,6 +28,12 @@
         .animate-pop { animation: popIn 0.3s forwards; }
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @media print { body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } }
+        
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="pb-24">
@@ -40,7 +46,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.0 | Silakan Login</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.2 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -111,7 +117,7 @@
         const APP = {
             init: () => {
                 document.getElementById('form-login').addEventListener('submit', APP.handleLogin);
-                const saved = localStorage.getItem('arena_user_v5');
+                const saved = localStorage.getItem('arena_user_v52');
                 if (saved) { STATE.user = JSON.parse(saved); APP.loadDashboard(); }
             },
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
@@ -128,17 +134,14 @@
                 let opts = '';
                 for(let i=0; i<12; i++) {
                     let d = new Date(); d.setMonth(d.getMonth() - i);
-                    let val = d.toISOString().substring(0,7);
-                    let label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-                    opts += `<option value="${val}">${label}</option>`;
+                    opts += `<option value="${d.toISOString().substring(0,7)}">${monthNames[d.getMonth()]} ${d.getFullYear()}</option>`;
                 }
                 return opts;
             },
 
             api: async (p) => {
                 try {
-                    const payloadBody = { action: p.action, data: p };
-                    const r = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadBody) });
+                    const r = await fetch(CONFIG.WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: p.action, data: p }) });
                     if (!r.ok) return [];
                     const txt = await r.text(); return txt ? JSON.parse(txt) : [];
                 } catch (e) { return null; }
@@ -150,7 +153,7 @@
                 const data = await APP.api({ action: 'login', username: document.getElementById('login-user').value, password: document.getElementById('login-pass').value });
                 APP.hideLoader();
                 
-                if (data === null) { alert("❌ Gagal Terhubung! Cek koneksi / seting CORS di n8n."); return; }
+                if (data === null) { alert("❌ Gagal Terhubung! Cek koneksi."); return; }
                 let rawUser = Array.isArray(data) ? (data[0]?.json || data[0]) : (data?.json || data);
                 
                 if (rawUser && rawUser.role) {
@@ -165,11 +168,11 @@
                         if(rawUser.cabang_arena || rawUser.cabang) uBranch = rawUser.cabang_arena || rawUser.cabang;
                     }
                     STATE.user = { username: rawUser.id_user_arena || rawUser.Users || 'User', userType: uType, branch: uBranch };
-                    localStorage.setItem('arena_user_v5', JSON.stringify(STATE.user));
+                    localStorage.setItem('arena_user_v52', JSON.stringify(STATE.user));
                     APP.loadDashboard();
                 } else { alert("❌ Gagal Login. Periksa Username/Password."); }
             },
-            logout: () => { localStorage.removeItem('arena_user_v5'); location.reload(); },
+            logout: () => { localStorage.removeItem('arena_user_v52'); location.reload(); },
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI...');
@@ -214,25 +217,83 @@
                 else if (tab === 'report') { container.innerHTML = APP.renderReportTab(); }
             },
 
+            // --- TAB OMSET CANGGIH MANAGER ---
             renderOmsetTab: () => {
                 const todayStr = APP.getTodayStr(); const yestStr = APP.getYesterdayStr(); const monthStr = APP.getMonthStr();
                 let data = { ALL: { t: 0, y: 0, m: 0 }, 'Sabang': { t: 0, y: 0, m: 0 }, 'Banda': { t: 0, y: 0, m: 0 }, 'Aceh Timur': { t: 0, y: 0, m: 0 } };
+                
+                let lostIncome = 0;
+                let cancelStats = {};
+                let successHtml = '';
+                let cancelHtml = '';
 
-                STATE.logs.forEach(l => {
-                    if (['batal', 'pending'].includes(String(l.status_unit_arena).toLowerCase())) return; 
+                // Membalik log agar yang terbaru di atas
+                const reversedLogs = [...STATE.logs].reverse();
+
+                reversedLogs.forEach(l => {
+                    const stat = String(l.status_unit_arena).toLowerCase();
+                    const val = Number(l.tagihan_arena) || 0;
                     const dateStr = (l.jam_mulai_sewa || '').substring(0,10);
                     const mStr = (l.jam_mulai_sewa || '').substring(0,7);
-                    const val = Number(l.tagihan_arena) || 0;
                     const branch = l.cabang_arena === 'Banda Aceh' ? 'Banda' : l.cabang_arena;
+                    const canceler = l.Users || 'Sistem';
 
-                    if (mStr === monthStr) { data.ALL.m += val; if (data[branch]) data[branch].m += val; }
-                    if (dateStr === todayStr) { data.ALL.t += val; if (data[branch]) data[branch].t += val; }
-                    if (dateStr === yestStr) { data.ALL.y += val; if (data[branch]) data[branch].y += val; }
+                    if (mStr === monthStr) {
+                        if (stat === 'batal') {
+                            lostIncome += val;
+                            if(!cancelStats[canceler]) cancelStats[canceler] = { count: 0, total: 0 };
+                            cancelStats[canceler].count++;
+                            cancelStats[canceler].total += val;
+
+                            // UI List Batal
+                            cancelHtml += `
+                            <div class="border-2 border-red-500 bg-red-50 p-3 rounded-lg mb-2 shadow-[2px_2px_0px_#ef4444]">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-black text-red-600 line-through">${l.nama_pelanggan_arena}</span>
+                                    <span class="text-xs font-black text-red-600">${APP.formatRp(val)}</span>
+                                </div>
+                                <p class="text-[10px] text-gray-600 font-bold mb-2">${l.paket_arena} | ${l.cabang_arena}</p>
+                                <div class="bg-red-200 border border-red-400 p-2 rounded text-center">
+                                    <p class="text-[9px] font-bold text-red-600 uppercase mb-0.5">DIBATALKAN OLEH:</p>
+                                    <p class="text-xl font-black text-red-800 uppercase tracking-widest">${canceler}</p>
+                                </div>
+                            </div>`;
+                        } 
+                        else if (stat !== 'pending') {
+                            // UI Rekap & List Sukses
+                            data.ALL.m += val; if (data[branch]) data[branch].m += val;
+                            if (dateStr === todayStr) { data.ALL.t += val; if (data[branch]) data[branch].t += val; }
+                            if (dateStr === yestStr) { data.ALL.y += val; if (data[branch]) data[branch].y += val; }
+                            
+                            let badge = stat === 'playing' || stat === 'main' ? '🟢 PLAYING' : (stat === 'booked' ? '⏳ BOOKED' : '✅ FINISHED');
+                            let color = stat === 'playing' || stat === 'main' ? 'text-green-600' : 'text-[#FF6B00]';
+                            
+                            successHtml += `
+                            <div class="border-2 border-black p-3 rounded-lg bg-white shadow-[2px_2px_0px_#000] mb-2 flex justify-between items-center">
+                                <div>
+                                    <p class="font-black text-xs uppercase">${l.nama_pelanggan_arena} <span class="bg-gray-200 px-1 rounded text-[9px] ml-1">${l.unit_arena}</span></p>
+                                    <p class="text-[9px] text-gray-500 font-bold">${(l.jam_mulai_sewa||'').substring(0,16)} | ${l.cabang_arena}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-black text-sm ${color}">${APP.formatRp(val)}</p>
+                                    <p class="text-[9px] font-bold text-gray-500 bg-gray-100 rounded-sm px-1 inline-block mt-0.5">${badge}</p>
+                                </div>
+                            </div>`;
+                        }
+                    }
                 });
+
+                let cancelStatsHtml = Object.keys(cancelStats).map(k => `
+                    <div class="flex justify-between items-center bg-red-100 p-2 rounded border border-red-300">
+                        <span class="font-black text-xs text-red-800 uppercase">👤 ${k}</span>
+                        <span class="font-black text-xs text-red-600">${cancelStats[k].count}x (${APP.formatRp(cancelStats[k].total)})</span>
+                    </div>
+                `).join('') || '<p class="text-[10px] text-gray-500 italic text-center">Belum ada data pembatalan.</p>';
 
                 return `
                     <div class="mario-card p-4 animate-pop">
                         <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4 uppercase">Monitoring Omset</h2>
+                        
                         <div class="bg-black text-white p-4 rounded-xl border-4 border-yellow-400 mb-4 shadow-[4px_4px_0px_#000]">
                             <p class="text-[10px] font-bold text-gray-300 text-center">TOTAL KESELURUHAN (BULAN INI)</p>
                             <p class="text-3xl font-black text-yellow-400 text-center">${APP.formatRp(data.ALL.m)}</p>
@@ -241,8 +302,9 @@
                                 <div class="text-right"><p class="text-[9px] text-gray-400 font-bold">KEMARIN</p><p class="font-black text-[#FF6B00] text-sm">${APP.formatRp(data.ALL.y)}</p></div>
                             </div>
                         </div>
+
                         <h3 class="font-black text-[11px] mb-2 uppercase text-gray-700">Rincian Per Cabang:</h3>
-                        <div class="space-y-3">
+                        <div class="space-y-3 mb-6">
                             ${['Banda', 'Sabang', 'Aceh Timur'].map(b => `
                                 <div class="border-2 border-black p-3 rounded-lg shadow-[2px_2px_0px_#000] bg-white">
                                     <p class="font-black text-sm mb-2 border-b-2 border-dashed border-gray-300 pb-1">${b === 'Banda' ? 'BANDA ACEH' : b.toUpperCase()}</p>
@@ -254,22 +316,44 @@
                                 </div>
                             `).join('')}
                         </div>
+
+                        <div class="border-t-4 border-black pt-6 mb-6">
+                            <div class="bg-red-100 border-4 border-red-600 p-4 rounded-xl shadow-[4px_4px_0px_#dc2626] mb-4 relative overflow-hidden">
+                                <div class="absolute -right-4 -top-4 opacity-20 text-6xl">💸</div>
+                                <p class="text-[10px] font-bold text-red-800 text-center uppercase tracking-widest mb-1">Potensi Cuan Hilang (Batal)</p>
+                                <p class="text-2xl font-black text-red-600 text-center">${APP.formatRp(lostIncome)}</p>
+                            </div>
+                            
+                            <h3 class="font-black text-[10px] mb-2 uppercase text-gray-700">Rincian Pembatalan Admin:</h3>
+                            <div class="space-y-1 mb-4">
+                                ${cancelStatsHtml}
+                            </div>
+                        </div>
+
+                        <h3 class="font-black text-xs mb-2 uppercase text-gray-800 bg-gray-200 px-3 py-1 rounded-full inline-block">✅ Riwayat Sukses (Bulan Ini)</h3>
+                        <div class="max-h-64 overflow-y-auto custom-scroll mb-6 pr-2">
+                            ${successHtml || '<p class="text-center text-xs text-gray-500 font-bold">Tidak ada data.</p>'}
+                        </div>
+
+                        <h3 class="font-black text-xs mb-2 uppercase text-red-800 bg-red-200 px-3 py-1 rounded-full inline-block">❌ Riwayat Batal (Bulan Ini)</h3>
+                        <div class="max-h-64 overflow-y-auto custom-scroll pr-2 pb-6">
+                            ${cancelHtml || '<p class="text-center text-xs text-gray-500 font-bold">Tidak ada data batal.</p>'}
+                        </div>
                     </div>`;
             },
 
             renderUnitBoxes: () => {
                 const todayStr = APP.getTodayStr(); const tomorrowStr = APP.getTomorrowStr(); const yestStr = APP.getYesterdayStr();
-                const reversedLogs = [...STATE.logs].reverse();
                 let html = '<div class="grid grid-cols-3 gap-2 mb-4">';
 
                 for(let i=1; i<=9; i++) {
-                    let status = 'kosong'; 
-                    const unitLogs = reversedLogs.filter(l => {
+                    const unitLogs = STATE.logs.filter(l => {
                         const uNum = String(l.unit_arena).replace(/\D/g, ''); 
                         const dStr = (l.jam_mulai_sewa||'').substring(0,10);
                         return uNum === String(i) && (dStr === todayStr || dStr === tomorrowStr || dStr === yestStr);
                     });
 
+                    let status = 'kosong';
                     const isPlaying = unitLogs.some(l => ['playing', 'main'].includes(String(l.status_unit_arena).toLowerCase()));
                     const isBooked = unitLogs.some(l => ['booked', 'book'].includes(String(l.status_unit_arena).toLowerCase()));
 
@@ -295,20 +379,18 @@
             },
 
             renderLogsUI: () => {
-                // TANGKAP DATA PENDING
                 const pendingLogs = STATE.logs.filter(l => String(l.status_unit_arena).toLowerCase() === 'pending');
                 let pendingHtml = '';
                 
                 if (pendingLogs.length > 0) {
                     pendingHtml = `
                     <div class="mb-6 p-4 border-4 border-red-500 bg-red-100 rounded-xl shadow-[4px_4px_0px_#ef4444] animate-pulse">
-                        <h3 class="font-black text-red-600 mb-3 text-center uppercase flex items-center justify-center gap-2"><span>🚨</span> PESANAN MASUK BARU! <span>🚨</span></h3>
+                        <h3 class="font-black text-red-600 mb-3 text-center uppercase flex items-center justify-center gap-2"><span>🚨</span> PESANAN BARU! <span>🚨</span></h3>
                         <div class="space-y-3">
                             ${pendingLogs.map(l => {
                                 const rowId = l.id || l.row_number || l._rowIndex;
                                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
                                 let optUnit = '';
-                                
                                 if(l.cabang_arena === 'Sabang') optUnit = '<option value="1">Unit 1</option><option value="2">Unit 2</option>';
                                 else if(l.cabang_arena === 'Banda' || l.cabang_arena === 'Banda Aceh') optUnit = '<option value="3">Unit 3</option><option value="4">Unit 4</option><option value="5">Unit 5</option><option value="6">Unit 6</option><option value="7">Unit 7</option>';
                                 else if(l.cabang_arena === 'Aceh Timur' || l.cabang_arena === 'Atim') optUnit = '<option value="8">Unit 8</option><option value="9">Unit 9</option>';
@@ -323,7 +405,8 @@
                                     <p class="text-[10px] font-bold text-gray-600 mb-2">Pesan: ${l.paket_arena} | ${cabLabel}</p>
                                     <div class="flex gap-2 mt-2">
                                         <select id="acc-unit-${rowId}" class="mario-input p-2 text-xs font-black flex-1 border-red-400 focus:border-red-600">${optUnit}</select>
-                                        <button onclick="APP.accBooking('${rowId}', '${l.pembayaran}')" class="mario-btn bg-green-500 text-white p-2 text-xs font-black px-4 flex-1 hover:bg-green-600 border-green-700">ACC & BOOK ✅</button>
+                                        <button onclick="APP.accBooking('${rowId}', '${l.pembayaran}')" class="mario-btn bg-green-500 text-white p-2 text-xs font-black px-2 flex-1 hover:bg-green-600 border-green-700">ACC ✅</button>
+                                        <button onclick="APP.cancelBooking('${rowId}')" class="mario-btn bg-red-500 text-white p-2 text-xs font-black px-2 flex-1 hover:bg-red-600 border-red-700">TOLAK ❌</button>
                                     </div>
                                 </div>`;
                             }).join('')}
@@ -353,13 +436,7 @@
             getLogListHTML: (cabangFilter) => {
                 const todayStr = APP.getTodayStr(); const yestStr = APP.getYesterdayStr(); const tomorrowStr = APP.getTomorrowStr();
                 const recentLogs = STATE.logs.filter(l => { const d = (l.jam_mulai_sewa||'').substring(0,10); return d === todayStr || d === yestStr || d === tomorrowStr; });
-                
-                // JANGAN TAMPILKAN YANG MASIH PENDING DI DAFTAR LOG REGULER
-                const filtered = recentLogs.filter(l => 
-                    (cabangFilter === 'ALL' || l.cabang_arena === cabangFilter || l.cabang_arena === (cabangFilter === 'Banda Aceh' ? 'Banda' : cabangFilter))
-                    && String(l.status_unit_arena).toLowerCase() !== 'pending'
-                );
-                
+                const filtered = recentLogs.filter(l => (cabangFilter === 'ALL' || l.cabang_arena === cabangFilter || l.cabang_arena === (cabangFilter === 'Banda Aceh' ? 'Banda' : cabangFilter)) && String(l.status_unit_arena).toLowerCase() !== 'pending');
                 const daysName = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 
                 return filtered.reverse().map(l => {
@@ -372,16 +449,13 @@
                         const dObj = new Date(l.jam_mulai_sewa.replace(' ', 'T'));
                         if (!isNaN(dObj)) dayStr = daysName[dObj.getDay()];
                     }
-                    
                     const waLink = l.link_wa_pelanggan_arena || 'https://wa.me/' + String(l.nomor_pelanggan_arena).replace(/^0/, '62');
 
-                    // SMART UI LOGIC
                     const stat = String(l.status_unit_arena).toLowerCase();
                     const pay = l.pembayaran;
 
                     let cardClass = "border-2 border-black p-3 rounded-xl bg-white shadow-[2px_2px_0px_#000] relative";
-                    let textClass = "";
-                    let badgeHtml = "";
+                    let textClass = ""; let badgeHtml = "";
 
                     if (stat === 'batal') {
                         cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-200 opacity-60 relative";
@@ -400,7 +474,6 @@
                         }
                     }
 
-                    // PASSING currentUnit saat change status!
                     return `
                     <div class="${cardClass}">
                         ${badgeHtml}
@@ -433,23 +506,28 @@
                 }).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
             },
 
-            // FUNGSI BARU UNTUK TOMBOL ACC
+            // PERINTAH KE N8N MEMBAWA NAMA ADMIN (STATE.user.username)
             accBooking: async (id, currentPay) => {
                 const unitSel = document.getElementById(`acc-unit-${id}`).value;
-                APP.showLoader('MENGKONFIRMASI PESANAN...');
-                await APP.api({ action: 'update_status', row_id: id, status_unit: 'booked', pembayaran: currentPay, unit: unitSel });
+                APP.showLoader('MENGKONFIRMASI...');
+                await APP.api({ action: 'update_status', row_id: id, status_unit: 'booked', pembayaran: currentPay, unit: unitSel, admin_name: STATE.user.username });
                 await APP.loadDashboard();
             },
-
+            cancelBooking: async (id) => {
+                if(!confirm('Yakin mau menolak pesanan ini?')) return;
+                APP.showLoader('MEMBATALKAN...');
+                await APP.api({ action: 'update_status', row_id: id, status_unit: 'batal', pembayaran: 'Belum', unit: 'Batal', admin_name: STATE.user.username });
+                await APP.loadDashboard();
+            },
             changeStatus: async (id, newStat, currentPay, currentUnit) => {
                 APP.showLoader('UPDATE STATUS...');
-                await APP.api({ action: 'update_status', row_id: id, status_unit: newStat, pembayaran: currentPay, unit: currentUnit });
+                await APP.api({ action: 'update_status', row_id: id, status_unit: newStat, pembayaran: currentPay, unit: currentUnit, admin_name: STATE.user.username });
                 await APP.loadDashboard();
             },
             togglePayment: async (id, currentStat, currentPay, currentUnit) => {
                 const newPay = currentPay === 'Lunas' ? 'Belum' : 'Lunas';
                 APP.showLoader('UPDATE BAYAR...');
-                await APP.api({ action: 'update_status', row_id: id, status_unit: currentStat, pembayaran: newPay, unit: currentUnit });
+                await APP.api({ action: 'update_status', row_id: id, status_unit: currentStat, pembayaran: newPay, unit: currentUnit, admin_name: STATE.user.username });
                 await APP.loadDashboard();
             },
 
