@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V4.7 - Night Owl Edition</title>
+    <title>ARENA SYSTEM V5.0 - Full Auto Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +40,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V4.7 | Silakan Login</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.0 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -111,7 +111,7 @@
         const APP = {
             init: () => {
                 document.getElementById('form-login').addEventListener('submit', APP.handleLogin);
-                const saved = localStorage.getItem('arena_user_v47');
+                const saved = localStorage.getItem('arena_user_v5');
                 if (saved) { STATE.user = JSON.parse(saved); APP.loadDashboard(); }
             },
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
@@ -165,11 +165,11 @@
                         if(rawUser.cabang_arena || rawUser.cabang) uBranch = rawUser.cabang_arena || rawUser.cabang;
                     }
                     STATE.user = { username: rawUser.id_user_arena || rawUser.Users || 'User', userType: uType, branch: uBranch };
-                    localStorage.setItem('arena_user_v47', JSON.stringify(STATE.user));
+                    localStorage.setItem('arena_user_v5', JSON.stringify(STATE.user));
                     APP.loadDashboard();
                 } else { alert("❌ Gagal Login. Periksa Username/Password."); }
             },
-            logout: () => { localStorage.removeItem('arena_user_v47'); location.reload(); },
+            logout: () => { localStorage.removeItem('arena_user_v5'); location.reload(); },
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI...');
@@ -219,7 +219,7 @@
                 let data = { ALL: { t: 0, y: 0, m: 0 }, 'Sabang': { t: 0, y: 0, m: 0 }, 'Banda': { t: 0, y: 0, m: 0 }, 'Aceh Timur': { t: 0, y: 0, m: 0 } };
 
                 STATE.logs.forEach(l => {
-                    if (String(l.status_unit_arena).toLowerCase() === 'batal') return; 
+                    if (['batal', 'pending'].includes(String(l.status_unit_arena).toLowerCase())) return; 
                     const dateStr = (l.jam_mulai_sewa || '').substring(0,10);
                     const mStr = (l.jam_mulai_sewa || '').substring(0,7);
                     const val = Number(l.tagihan_arena) || 0;
@@ -257,28 +257,24 @@
                     </div>`;
             },
 
-            // --- DASHBOARD KOTAK UNIT WATERMARK ---
             renderUnitBoxes: () => {
-                const todayStr = APP.getTodayStr(); 
-                const tomorrowStr = APP.getTomorrowStr(); 
-                const yestStr = APP.getYesterdayStr(); // FIX BUG SHIFT MALAM!
+                const todayStr = APP.getTodayStr(); const tomorrowStr = APP.getTomorrowStr(); const yestStr = APP.getYesterdayStr();
                 const reversedLogs = [...STATE.logs].reverse();
                 let html = '<div class="grid grid-cols-3 gap-2 mb-4">';
 
                 for(let i=1; i<=9; i++) {
                     let status = 'kosong'; 
-                    const latestLog = reversedLogs.find(l => {
+                    const unitLogs = reversedLogs.filter(l => {
                         const uNum = String(l.unit_arena).replace(/\D/g, ''); 
                         const dStr = (l.jam_mulai_sewa||'').substring(0,10);
-                        // Cek 3 Hari (Kemarin, Hari Ini, Besok)
-                        return uNum === String(i) && (dStr === todayStr || dStr === tomorrowStr || dStr === yestStr) && String(l.status_unit_arena).toLowerCase() !== 'batal';
+                        return uNum === String(i) && (dStr === todayStr || dStr === tomorrowStr || dStr === yestStr);
                     });
 
-                    if (latestLog) {
-                        const stat = String(latestLog.status_unit_arena).toLowerCase();
-                        if (stat === 'booked' || stat === 'book') status = 'book';
-                        else if (stat === 'playing' || stat === 'main') status = 'main';
-                    }
+                    const isPlaying = unitLogs.some(l => ['playing', 'main'].includes(String(l.status_unit_arena).toLowerCase()));
+                    const isBooked = unitLogs.some(l => ['booked', 'book'].includes(String(l.status_unit_arena).toLowerCase()));
+
+                    if (isPlaying) status = 'main';
+                    else if (isBooked) status = 'book';
 
                     let bgClass = 'bg-black text-white'; let statusText = 'KOSONG';
                     if (status === 'book') { bgClass = 'bg-yellow-400 text-black border-yellow-500'; statusText = 'BOOKED'; }
@@ -299,8 +295,45 @@
             },
 
             renderLogsUI: () => {
+                // TANGKAP DATA PENDING
+                const pendingLogs = STATE.logs.filter(l => String(l.status_unit_arena).toLowerCase() === 'pending');
+                let pendingHtml = '';
+                
+                if (pendingLogs.length > 0) {
+                    pendingHtml = `
+                    <div class="mb-6 p-4 border-4 border-red-500 bg-red-100 rounded-xl shadow-[4px_4px_0px_#ef4444] animate-pulse">
+                        <h3 class="font-black text-red-600 mb-3 text-center uppercase flex items-center justify-center gap-2"><span>🚨</span> PESANAN MASUK BARU! <span>🚨</span></h3>
+                        <div class="space-y-3">
+                            ${pendingLogs.map(l => {
+                                const rowId = l.id || l.row_number || l._rowIndex;
+                                const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
+                                let optUnit = '';
+                                
+                                if(l.cabang_arena === 'Sabang') optUnit = '<option value="1">Unit 1</option><option value="2">Unit 2</option>';
+                                else if(l.cabang_arena === 'Banda' || l.cabang_arena === 'Banda Aceh') optUnit = '<option value="3">Unit 3</option><option value="4">Unit 4</option><option value="5">Unit 5</option><option value="6">Unit 6</option><option value="7">Unit 7</option>';
+                                else if(l.cabang_arena === 'Aceh Timur' || l.cabang_arena === 'Atim') optUnit = '<option value="8">Unit 8</option><option value="9">Unit 9</option>';
+                                else optUnit = '<option value="1">Unit 1</option>';
+
+                                return `
+                                <div class="border-2 border-black p-3 bg-white rounded-lg">
+                                    <div class="flex justify-between">
+                                        <p class="font-black text-sm uppercase">${l.nama_pelanggan_arena}</p>
+                                        <p class="font-black text-sm text-[#FF6B00]">${APP.formatRp(l.tagihan_arena)}</p>
+                                    </div>
+                                    <p class="text-[10px] font-bold text-gray-600 mb-2">Pesan: ${l.paket_arena} | ${cabLabel}</p>
+                                    <div class="flex gap-2 mt-2">
+                                        <select id="acc-unit-${rowId}" class="mario-input p-2 text-xs font-black flex-1 border-red-400 focus:border-red-600">${optUnit}</select>
+                                        <button onclick="APP.accBooking('${rowId}', '${l.pembayaran}')" class="mario-btn bg-green-500 text-white p-2 text-xs font-black px-4 flex-1 hover:bg-green-600 border-green-700">ACC & BOOK ✅</button>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+                }
+
                 return `
                     <div class="mario-card p-4 animate-pop">
+                        ${pendingHtml}
                         <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4 uppercase">Status 9 Unit</h2>
                         <div id="dashboard-unit-boxes">${APP.renderUnitBoxes()}</div>
                         <div class="flex justify-between items-center mb-3 mt-4 border-t-2 border-dashed border-gray-400 pt-4">
@@ -320,7 +353,12 @@
             getLogListHTML: (cabangFilter) => {
                 const todayStr = APP.getTodayStr(); const yestStr = APP.getYesterdayStr(); const tomorrowStr = APP.getTomorrowStr();
                 const recentLogs = STATE.logs.filter(l => { const d = (l.jam_mulai_sewa||'').substring(0,10); return d === todayStr || d === yestStr || d === tomorrowStr; });
-                const filtered = recentLogs.filter(l => cabangFilter === 'ALL' || l.cabang_arena === cabangFilter || l.cabang_arena === (cabangFilter === 'Banda Aceh' ? 'Banda' : cabangFilter));
+                
+                // JANGAN TAMPILKAN YANG MASIH PENDING DI DAFTAR LOG REGULER
+                const filtered = recentLogs.filter(l => 
+                    (cabangFilter === 'ALL' || l.cabang_arena === cabangFilter || l.cabang_arena === (cabangFilter === 'Banda Aceh' ? 'Banda' : cabangFilter))
+                    && String(l.status_unit_arena).toLowerCase() !== 'pending'
+                );
                 
                 const daysName = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 
@@ -362,6 +400,7 @@
                         }
                     }
 
+                    // PASSING currentUnit saat change status!
                     return `
                     <div class="${cardClass}">
                         ${badgeHtml}
@@ -377,13 +416,13 @@
                             <span class="text-xs font-semibold text-gray-700 ${textClass}">${l.paket_arena}</span><span class="text-sm font-black text-orange-600 ${textClass}">${APP.formatRp(l.tagihan_arena)}</span>
                         </div>
                         <div class="flex gap-1 mt-3 pt-2 border-t border-gray-200">
-                            <select onchange="APP.changeStatus('${rowId}', this.value, '${l.pembayaran}')" class="mario-input p-1 text-[9px] w-1/3 font-bold">
+                            <select onchange="APP.changeStatus('${rowId}', this.value, '${l.pembayaran}', '${l.unit_arena}')" class="mario-input p-1 text-[9px] w-1/3 font-bold">
                                 <option value="booked" ${stat==='booked'?'selected':''}>BOOKED</option>
                                 <option value="playing" ${stat==='playing'?'selected':''}>PLAYING</option>
                                 <option value="finished" ${stat==='finished'?'selected':''}>FINISHED</option>
                                 <option value="batal" ${stat==='batal'?'selected':''}>BATAL ❌</option>
                             </select>
-                            <button onclick="APP.togglePayment('${rowId}', '${l.status_unit_arena}', '${l.pembayaran}')" class="mario-btn p-1 text-[9px] w-1/3 ${l.pembayaran==='Lunas'?'bg-green-400':'bg-red-400 text-white'}">
+                            <button onclick="APP.togglePayment('${rowId}', '${l.status_unit_arena}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-btn p-1 text-[9px] w-1/3 ${l.pembayaran==='Lunas'?'bg-green-400':'bg-red-400 text-white'}">
                                 ${l.pembayaran==='Lunas'?'✅ LUNAS':'❌ BELUM'}
                             </button>
                             <a href="${waLink}" target="_blank" class="mario-btn p-1 text-[10px] w-1/3 bg-[#25D366] text-white flex items-center justify-center font-black">
@@ -394,15 +433,23 @@
                 }).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
             },
 
-            changeStatus: async (id, newStat, currentPay) => {
-                APP.showLoader('UPDATE STATUS...');
-                await APP.api({ action: 'update_status', row_id: id, status_unit: newStat, pembayaran: currentPay });
+            // FUNGSI BARU UNTUK TOMBOL ACC
+            accBooking: async (id, currentPay) => {
+                const unitSel = document.getElementById(`acc-unit-${id}`).value;
+                APP.showLoader('MENGKONFIRMASI PESANAN...');
+                await APP.api({ action: 'update_status', row_id: id, status_unit: 'booked', pembayaran: currentPay, unit: unitSel });
                 await APP.loadDashboard();
             },
-            togglePayment: async (id, currentStat, currentPay) => {
+
+            changeStatus: async (id, newStat, currentPay, currentUnit) => {
+                APP.showLoader('UPDATE STATUS...');
+                await APP.api({ action: 'update_status', row_id: id, status_unit: newStat, pembayaran: currentPay, unit: currentUnit });
+                await APP.loadDashboard();
+            },
+            togglePayment: async (id, currentStat, currentPay, currentUnit) => {
                 const newPay = currentPay === 'Lunas' ? 'Belum' : 'Lunas';
                 APP.showLoader('UPDATE BAYAR...');
-                await APP.api({ action: 'update_status', row_id: id, status_unit: currentStat, pembayaran: newPay });
+                await APP.api({ action: 'update_status', row_id: id, status_unit: currentStat, pembayaran: newPay, unit: currentUnit });
                 await APP.loadDashboard();
             },
 
@@ -534,7 +581,7 @@
                 STATE.logs.forEach(l => {
                     const dateStr = (l.jam_mulai_sewa||'').substring(0,7); 
                     const matchBranch = branch === 'ALL' || l.cabang_arena === branch || (branch === 'Banda' && l.cabang_arena === 'Banda');
-                    if (matchBranch && dateStr === month && String(l.status_unit_arena).toLowerCase() !== 'batal') {
+                    if (matchBranch && dateStr === month && !['batal', 'pending'].includes(String(l.status_unit_arena).toLowerCase())) {
                         totalOmset += Number(l.tagihan_arena);
                         rowHTML += `<tr><td style="border:1px solid #000; padding:8px;">${(l.jam_mulai_sewa||'').substring(0,10)}</td><td style="border:1px solid #000; padding:8px;">${l.cabang_arena} / U${l.unit_arena}</td><td style="border:1px solid #000; padding:8px;">${l.nama_pelanggan_arena}</td><td style="border:1px solid #000; padding:8px;">${l.paket_arena}</td><td style="border:1px solid #000; padding:8px; text-align:right;">${APP.formatRp(l.tagihan_arena)}</td></tr>`;
                     }
@@ -560,7 +607,7 @@
                 
                 const ownerLogs = STATE.logs.filter(l => {
                     const dateStr = (l.jam_mulai_sewa || '').substring(0,10);
-                    return (l.cabang_arena === branchStr || (branchStr==='Banda Aceh' && l.cabang_arena==='Banda')) && dateStr.startsWith(monthStr) && String(l.status_unit_arena).toLowerCase() !== 'batal';
+                    return (l.cabang_arena === branchStr || (branchStr==='Banda Aceh' && l.cabang_arena==='Banda')) && dateStr.startsWith(monthStr) && !['batal', 'pending'].includes(String(l.status_unit_arena).toLowerCase());
                 });
 
                 ownerLogs.forEach(l => {
