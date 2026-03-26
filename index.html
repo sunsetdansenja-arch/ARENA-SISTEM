@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V5.4 - Ultimate Admin Edition</title>
+    <title>ARENA SYSTEM V5.4.1 - Omni Manager Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,7 +29,7 @@
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @media print { body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } }
         
-        /* Custom Scrollbar & Modals */
+        /* Custom Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
@@ -47,7 +47,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.4 | Silakan Login</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.4.1 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -56,6 +56,7 @@
     </header>
 
     <main id="app" class="max-w-md mx-auto p-4 mt-2 animate-pop">
+        
         <section id="view-login" class="mario-card p-6">
             <h2 class="text-xl font-black mb-6 text-center border-b-4 border-black pb-2 uppercase">Akses Sistem</h2>
             <form id="form-login" class="space-y-4">
@@ -85,6 +86,7 @@
             </div>
             <div id="owner-logs" class="space-y-3 pb-6"></div>
         </section>
+
     </main>
 
     <div id="modal-cancel" class="modal-overlay hidden">
@@ -146,7 +148,7 @@
         const APP = {
             init: () => {
                 document.getElementById('form-login').addEventListener('submit', APP.handleLogin);
-                const saved = localStorage.getItem('arena_user_v54');
+                const saved = localStorage.getItem('arena_user_v541');
                 if (saved) { STATE.user = JSON.parse(saved); APP.loadDashboard(); }
             },
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
@@ -166,6 +168,39 @@
                     opts += `<option value="${d.toISOString().substring(0,7)}">${monthNames[d.getMonth()]} ${d.getFullYear()}</option>`;
                 }
                 return opts;
+            },
+
+            // --- HELPER UNTUK MENDETEKSI STATUS UNIT SAAT INI ---
+            getUnitStatus: (uNum) => {
+                const todayStr = APP.getTodayStr(); const tomorrowStr = APP.getTomorrowStr(); const yestStr = APP.getYesterdayStr();
+                const unitLogs = STATE.logs.filter(l => {
+                    const logNum = String(l.unit_arena).replace(/\D/g, ''); 
+                    const dStr = (l.jam_mulai_sewa||'').substring(0,10);
+                    return logNum === String(uNum) && (dStr === todayStr || dStr === tomorrowStr || dStr === yestStr);
+                });
+                const isPlaying = unitLogs.some(l => ['playing', 'main'].includes(String(l.status_unit_arena).toLowerCase()));
+                const isBooked = unitLogs.some(l => ['booked', 'book'].includes(String(l.status_unit_arena).toLowerCase()));
+                if (isPlaying) return 'main';
+                if (isBooked) return 'book';
+                return 'kosong';
+            },
+
+            // --- GENERATE HTML DROPDOWN DENGAN INDIKATOR WARNA/EMOJI ---
+            generateUnitOptionsHtml: (branch) => {
+                let units = [];
+                let b = String(branch).toLowerCase();
+                if(b.includes('sabang')) units = [1, 2];
+                else if(b.includes('banda')) units = [3, 4, 5, 6, 7];
+                else if(b.includes('timur') || b.includes('atim')) units = [8, 9];
+                else units = [1];
+
+                return units.map(u => {
+                    const stat = APP.getUnitStatus(u);
+                    let label = `Unit ${u}`;
+                    if (stat === 'main' || stat === 'book') { label += ` 🔴 (Terisi)`; } 
+                    else { label += ` 🟢 (Kosong)`; }
+                    return `<option value="${u}">${label}</option>`;
+                }).join('');
             },
 
             api: async (p) => {
@@ -197,11 +232,11 @@
                         if(rawUser.cabang_arena || rawUser.cabang) uBranch = rawUser.cabang_arena || rawUser.cabang;
                     }
                     STATE.user = { username: rawUser.id_user_arena || rawUser.Users || 'User', userType: uType, branch: uBranch };
-                    localStorage.setItem('arena_user_v54', JSON.stringify(STATE.user));
+                    localStorage.setItem('arena_user_v541', JSON.stringify(STATE.user));
                     APP.loadDashboard();
                 } else { alert("❌ Gagal Login. Periksa Username/Password."); }
             },
-            logout: () => { localStorage.removeItem('arena_user_v54'); location.reload(); },
+            logout: () => { localStorage.removeItem('arena_user_v541'); location.reload(); },
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI...');
@@ -219,9 +254,8 @@
                 STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
                 STATE.expenses = raw.filter(i => i.pengeluaran_arena !== undefined);
 
-                if (STATE.user.userType === 'owner') {
-                    APP.renderOwner();
-                } else {
+                if (STATE.user.userType === 'owner') { APP.renderOwner(); } 
+                else {
                     document.getElementById('bottom-nav').classList.remove('hidden');
                     document.getElementById('view-main').classList.remove('hidden');
                     if (STATE.user.userType === 'manager') {
@@ -274,8 +308,8 @@
             handleStatusChange: (selectEl, id, pay, unit) => {
                 const newVal = selectEl.value;
                 if (newVal === 'batal') {
-                    selectEl.value = selectEl.getAttribute('data-old-value'); // Kembalikan ke value lama di UI
-                    APP.showCancelModal(id, pay, unit); // Munculkan pop-up cancel
+                    selectEl.value = selectEl.getAttribute('data-old-value'); 
+                    APP.showCancelModal(id, pay, unit); 
                 } else {
                     APP.showLoader('UPDATE STATUS...');
                     APP.api({ action: 'update_status', row_id: id, status_unit: newVal, pembayaran: pay, unit: unit, admin_name: STATE.user.username, keterangan: '' })
@@ -394,7 +428,7 @@
                                 <p class="text-[10px] font-bold text-red-800 text-center uppercase tracking-widest mb-1">Potensi Cuan Hilang (Batal)</p>
                                 <p class="text-2xl font-black text-red-600 text-center">${APP.formatRp(lostIncome)}</p>
                             </div>
-                            <h3 class="font-black text-[10px] mb-2 uppercase text-gray-700">Tersangka Cancel:</h3>
+                            <h3 class="font-black text-[10px] mb-2 uppercase text-gray-700">PIC Cancel:</h3>
                             <div class="space-y-1 mb-4">${cancelStatsHtml}</div>
                         </div>
 
@@ -452,11 +486,9 @@
                             ${pendingLogs.map(l => {
                                 const rowId = l.id || l.row_number || l._rowIndex;
                                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
-                                let optUnit = '';
-                                if(l.cabang_arena === 'Sabang') optUnit = '<option value="1">Unit 1</option><option value="2">Unit 2</option>';
-                                else if(l.cabang_arena === 'Banda' || l.cabang_arena === 'Banda Aceh') optUnit = '<option value="3">Unit 3</option><option value="4">Unit 4</option><option value="5">Unit 5</option><option value="6">Unit 6</option><option value="7">Unit 7</option>';
-                                else if(l.cabang_arena === 'Aceh Timur' || l.cabang_arena === 'Atim') optUnit = '<option value="8">Unit 8</option><option value="9">Unit 9</option>';
-                                else optUnit = '<option value="1">Unit 1</option>';
+                                
+                                // Opsi Unit Dinamis (Dilengkapi Indikator Emoji)
+                                const optUnit = APP.generateUnitOptionsHtml(l.cabang_arena);
 
                                 const ongkirValue = l.ongkir || l.ongkir_arena || 0;
                                 const ongkirTxt = Number(ongkirValue) > 0 ? ` <br><span class="text-blue-600 text-xs">+ Ongkir ${APP.formatRp(ongkirValue)}</span>` : '';
@@ -586,7 +618,14 @@
                 }).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
             },
 
-            // --- INPUT ADMIN (UPDATE ONGKIR BANDA) ---
+            accBooking: async (id, currentPay) => {
+                const unitSel = document.getElementById(`acc-unit-${id}`).value;
+                APP.showLoader('MENGKONFIRMASI...');
+                await APP.api({ action: 'update_status', row_id: id, status_unit: 'booked', pembayaran: currentPay, unit: unitSel, admin_name: STATE.user.username, keterangan: '' });
+                await APP.loadDashboard();
+            },
+
+            // --- INPUT ADMIN ---
             renderInputForm: () => {
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 const b = STATE.user.branch || ''; 
@@ -648,12 +687,8 @@
                 if (branch === 'Banda') { logistikBox.classList.remove('hidden'); } 
                 else { logistikBox.classList.add('hidden'); document.getElementById('r-ongkir').value = 0; document.getElementById('r-delivery').value = 'ambil'; }
 
-                let opts = '';
-                if(branch === 'Sabang') opts = '<option value="1">Unit 1</option><option value="2">Unit 2</option>';
-                else if(branch === 'Banda') opts = '<option value="3">Unit 3</option><option value="4">Unit 4</option><option value="5">Unit 5</option><option value="6">Unit 6</option><option value="7">Unit 7</option>';
-                else if(branch === 'Aceh Timur') opts = '<option value="8">Unit 8</option><option value="9">Unit 9</option>';
-                else opts = '<option value="1">Unit 1</option>';
-                unitSel.innerHTML = opts;
+                // Panggil opsi yang udah ada indikator warnanya
+                unitSel.innerHTML = APP.generateUnitOptionsHtml(branch);
                 APP.updatePrice();
             },
 
