@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V5.5 - Financial Corporate Edition</title>
+    <title>ARENA SYSTEM V5.6 - Corporate Dividend Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
         :root { --mario-orange: #FF6B00; --mario-black: #000000; --mario-yellow: #FFD700; }
@@ -27,13 +28,14 @@
         .hidden { display: none !important; }
         .animate-pop { animation: popIn 0.3s forwards; }
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @media print { body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } }
+        @media print { body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; display: block; position: absolute; top:0; left:0; width:100%; background:white; } }
         
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
+        .font-beuna { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="pb-24">
@@ -46,7 +48,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.5 | Silakan Login</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.6 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -147,7 +149,7 @@
         const APP = {
             init: () => {
                 document.getElementById('form-login').addEventListener('submit', APP.handleLogin);
-                const saved = localStorage.getItem('arena_user_v55');
+                const saved = localStorage.getItem('arena_user_v56');
                 if (saved) { STATE.user = JSON.parse(saved); APP.loadDashboard(); }
             },
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
@@ -169,7 +171,6 @@
                 return opts;
             },
 
-            // --- HELPER UNTUK MENDETEKSI STATUS UNIT SAAT INI ---
             getUnitStatus: (uNum) => {
                 const todayStr = APP.getTodayStr(); const tomorrowStr = APP.getTomorrowStr(); const yestStr = APP.getYesterdayStr();
                 const unitLogs = STATE.logs.filter(l => {
@@ -230,11 +231,11 @@
                         if(rawUser.cabang_arena || rawUser.cabang) uBranch = rawUser.cabang_arena || rawUser.cabang;
                     }
                     STATE.user = { username: rawUser.id_user_arena || rawUser.Users || 'User', userType: uType, branch: uBranch };
-                    localStorage.setItem('arena_user_v55', JSON.stringify(STATE.user));
+                    localStorage.setItem('arena_user_v56', JSON.stringify(STATE.user));
                     APP.loadDashboard();
                 } else { alert("❌ Gagal Login. Periksa Username/Password."); }
             },
-            logout: () => { localStorage.removeItem('arena_user_v55'); location.reload(); },
+            logout: () => { localStorage.removeItem('arena_user_v56'); location.reload(); },
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI...');
@@ -763,35 +764,34 @@
 
             // --- FINANCIAL ENGINE (FRONT-END) ---
             calculateFinancials: (monthStr) => {
-                // Wadah Penghitungan
                 let fin = {
-                    'Banda': { gross: 0, expense: 0, dp_fee: 0, dp_comm: 0, net: 0, sh_name: 'Nibras', sh_pct: 0.40, sh_cut: 0, dimas_cut: 0, exp_logs: [] },
-                    'Sabang': { gross: 0, expense: 0, dp_fee: 150000, dp_comm: 0, net: 0, sh_name: 'Blok', sh_pct: 0.50, sh_cut: 0, dimas_cut: 0, exp_logs: [] },
-                    'Aceh Timur': { gross: 0, expense: 0, dp_fee: 100000, dp_comm: 0, net: 0, sh_name: 'Farid', sh_pct: 0.50, sh_cut: 0, dimas_cut: 0, exp_logs: [] },
-                    'ALL': { gross: 0, expense: 0, dp_total: 0, net: 0, dimas_total: 0 }
+                    'Banda': { gross: 0, expense: 0, dp_fee: 0, dp_comm: 0, net: 0, sh_name: 'Nibras', sh_pct: 0.40, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [] },
+                    'Sabang': { gross: 0, expense: 0, dp_fee: 150000, dp_comm: 0, net: 0, sh_name: 'Blok', sh_pct: 0.50, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [] },
+                    'Aceh Timur': { gross: 0, expense: 0, dp_fee: 100000, dp_comm: 0, net: 0, sh_name: 'Farid', sh_pct: 0.50, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [] },
+                    'ALL': { gross: 0, expense: 0, dp_total: 0, net: 0, dimas_total: 0, exp_logs: [], order_logs: [] }
                 };
 
-                // 1. Hitung Gross (Omset)
                 STATE.logs.forEach(l => {
                     const m = (l.jam_mulai_sewa||'').substring(0,7);
                     const stat = String(l.status_unit_arena).toLowerCase();
                     let b = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
                     
                     if (m === monthStr && !['batal', 'pending'].includes(stat) && fin[b]) {
-                        fin[b].gross += (Number(l.tagihan_arena) || 0) + (Number(l.ongkir_arena || l.ongkir || 0));
+                        let totalTagihan = (Number(l.tagihan_arena) || 0) + (Number(l.ongkir_arena || l.ongkir || 0));
+                        fin[b].gross += totalTagihan;
+                        fin[b].order_logs.push({...l, final_val: totalTagihan});
+                        fin.ALL.order_logs.push({...l, final_val: totalTagihan, proper_branch: b});
                     }
                 });
 
-                // 2. Hitung Komisi DP Otomatis (Kalau bulan itu ada aktivitas/omset)
                 if (fin['Sabang'].gross > 0 || STATE.expenses.some(e=>e.cabang_id_arena==='Sabang')) {
                     fin['Sabang'].dp_comm = fin['Sabang'].gross * 0.1;
-                } else { fin['Sabang'].dp_fee = 0; } // Hilangkan fixed cost kalau mati total
+                } else { fin['Sabang'].dp_fee = 0; }
 
                 if (fin['Aceh Timur'].gross > 0 || STATE.expenses.some(e=>e.cabang_id_arena==='Aceh Timur' || e.cabang_id_arena==='Atim')) {
                     fin['Aceh Timur'].dp_comm = fin['Aceh Timur'].gross * 0.1;
                 } else { fin['Aceh Timur'].dp_fee = 0; }
 
-                // 3. Hitung Pengeluaran Manual
                 STATE.expenses.forEach(e => {
                     const d = (e.tanggal_pengeluaran_arena || e.tanggal_pengeluaran || '').substring(0,7);
                     let b = e.cabang_id_arena === 'Banda Aceh' ? 'Banda' : (e.cabang_id_arena === 'Atim' ? 'Aceh Timur' : e.cabang_id_arena);
@@ -799,10 +799,10 @@
                         let val = Number(e.jumlah_pengeluaran_arena || e.jumlah_pengeluaran || 0);
                         fin[b].expense += val;
                         fin[b].exp_logs.push(e);
+                        fin.ALL.exp_logs.push({...e, proper_branch: b});
                     }
                 });
 
-                // 4. Finalisasi Laba Bersih & Profit Sharing
                 ['Banda', 'Sabang', 'Aceh Timur'].forEach(b => {
                     let total_exp = fin[b].expense + fin[b].dp_fee + fin[b].dp_comm;
                     fin[b].net = fin[b].gross - total_exp;
@@ -835,14 +835,19 @@
                                 <option value="Banda">Banda Aceh</option>
                                 <option value="Sabang">Sabang</option>
                                 <option value="Aceh Timur">Aceh Timur</option>
-                                <option value="SHAREHOLDER">💎 Profit Sharing (Bagi Hasil)</option>
+                                <option disabled>──────────────</option>
+                                <option value="SHAREHOLDER">💎 Profit Sharing (Ringkasan)</option>
+                                <option value="SH_NIBRAS">📄 SLIP SH: NIBRAS (Banda)</option>
+                                <option value="SH_BLOK">📄 SLIP SH: BLOK (Sabang)</option>
+                                <option value="SH_FARID">📄 SLIP SH: FARID (Atim)</option>
+                                <option value="SH_DIMAS">👑 SLIP SH: DIMAS (Owner)</option>
                             </select>
                         </div>
                     </div>
 
                     <div id="report-preview" class="mb-6"></div>
 
-                    <button onclick="APP.printReport()" class="w-full mario-btn bg-black text-white p-4 uppercase font-black text-lg shadow-[4px_4px_0px_#FFD700]">🖨️ Cetak PDF</button>
+                    <button onclick="APP.printReport()" class="w-full mario-btn bg-black text-white p-4 uppercase font-black text-lg shadow-[4px_4px_0px_#FFD700]">🖨️ Cetak PDF / SLIP</button>
                 </div>
             `,
 
@@ -872,9 +877,25 @@
                                 <p class="font-black text-[#FF6B00]">${APP.formatRp(fin['Aceh Timur'].sh_cut)}</p>
                             </div>
                             <div class="bg-yellow-100 p-2 rounded-lg border-2 border-yellow-500 shadow-[2px_2px_0px_#eab308]">
-                                <p class="text-[9px] font-black text-yellow-800">DIMAS (AKUMULASI SISA)</p>
+                                <p class="text-[9px] font-black text-yellow-800">DIMAS (SISA AKUMULASI)</p>
                                 <p class="font-black text-green-600">${APP.formatRp(fin.ALL.dimas_total)}</p>
                             </div>
+                        </div>
+                    `;
+                } else if (type.startsWith('SH_')) {
+                    // Preview Khusus Slip
+                    let targetBranch = type === 'SH_NIBRAS' ? 'Banda' : (type === 'SH_BLOK' ? 'Sabang' : (type === 'SH_FARID' ? 'Aceh Timur' : 'ALL'));
+                    let targetName = type.replace('SH_', '');
+                    let targetCut = type === 'SH_DIMAS' ? fin.ALL.dimas_total : fin[targetBranch].sh_cut;
+                    html = `
+                        <div class="bg-blue-50 border-2 border-blue-500 p-4 rounded-xl shadow-[4px_4px_0px_#3b82f6] text-left">
+                            <p class="font-black text-sm text-blue-800 mb-1">📄 PREVIEW SLIP DIVIDEN</p>
+                            <p class="text-[10px] font-bold text-gray-600 mb-3">PENERIMA: <span class="text-black uppercase">${targetName}</span></p>
+                            <div class="bg-white p-3 rounded border border-gray-300">
+                                <p class="text-[10px] font-bold text-gray-500">TOTAL DITRANSFER:</p>
+                                <p class="text-2xl font-black text-green-600">${APP.formatRp(targetCut)}</p>
+                            </div>
+                            <p class="text-[9px] font-bold text-gray-400 mt-2 italic text-center">*Klik Cetak PDF untuk melihat Slip Lengkap beserta Log Transaksi</p>
                         </div>
                     `;
                 } else {
@@ -909,13 +930,21 @@
                 const month = document.getElementById('report-month').value; 
                 const monthLabel = document.getElementById('report-month').options[document.getElementById('report-month').selectedIndex].text;
                 const fin = APP.calculateFinancials(month);
+                const printDate = new Date().toLocaleString('id-ID');
+                const slipId = `SLP-${Date.now().toString().slice(-6)}`;
 
-                let printHtml = `<div style="font-family: Arial, sans-serif; color: #000; padding: 20px;">`;
-                printHtml += `<h1 style="text-align:center; font-size:24px; margin-bottom:5px; text-transform:uppercase; font-weight:900;">LAPORAN KEUANGAN ARENA PLAYBOX</h1>`;
-                printHtml += `<h2 style="text-align:center; font-size:14px; margin-bottom:30px; font-weight:normal; border-bottom:2px solid #000; padding-bottom:10px;">Periode: <b>${monthLabel}</b> | Tipe: <b>${type === 'SHAREHOLDER' ? 'Profit Sharing (Bagi Hasil)' : (type === 'ALL' ? 'Semua Cabang (Global)' : type)}</b></h2>`;
+                let printHtml = `<div style="font-family: Arial, sans-serif; color: #000; padding: 20px; max-width: 800px; margin: auto;">`;
+                
+                // HEADER GENERAL
+                printHtml += `<div style="text-align:center; margin-bottom:30px;">`;
+                printHtml += `<h1 style="font-size:24px; margin:0; text-transform:uppercase; font-weight:900;">ARENA PLAYBOX</h1>`;
+                if(type.startsWith('SH_')) printHtml += `<h2 style="font-size:16px; margin:5px 0 0 0; color:#4b5563;">SLIP BAGI HASIL SHAREHOLDER</h2>`;
+                else printHtml += `<h2 style="font-size:16px; margin:5px 0 0 0; color:#4b5563;">LAPORAN KEUANGAN & OPERASIONAL</h2>`;
+                printHtml += `</div>`;
 
                 if (type === 'SHAREHOLDER') {
                     printHtml += `
+                    <h3 style="font-size:14px; border-bottom:2px solid #000; padding-bottom:5px;">Periode: ${monthLabel}</h3>
                     <table style="width:100%; border-collapse: collapse; text-align:left; font-size:14px; margin-bottom:20px; border: 2px solid #000;">
                         <tr style="background:#f3f4f6;"><th style="border:1px solid #000; padding:12px;">Cabang</th><th style="border:1px solid #000; padding:12px; text-align:right;">Laba Bersih (Net)</th><th style="border:1px solid #000; padding:12px;">Shareholder</th><th style="border:1px solid #000; padding:12px; text-align:right;">Jatah (IDR)</th></tr>
                         <tr><td style="border:1px solid #000; padding:12px; font-weight:bold;">Banda Aceh</td><td style="border:1px solid #000; padding:12px; text-align:right;">${APP.formatRp(fin['Banda'].net)}</td><td style="border:1px solid #000; padding:12px;">Nibras (40%)</td><td style="border:1px solid #000; padding:12px; text-align:right; font-weight:bold; color:#d97706;">${APP.formatRp(fin['Banda'].sh_cut)}</td></tr>
@@ -923,34 +952,102 @@
                         <tr><td style="border:1px solid #000; padding:12px; font-weight:bold;">Aceh Timur</td><td style="border:1px solid #000; padding:12px; text-align:right;">${APP.formatRp(fin['Aceh Timur'].net)}</td><td style="border:1px solid #000; padding:12px;">Farid (50%)</td><td style="border:1px solid #000; padding:12px; text-align:right; font-weight:bold; color:#d97706;">${APP.formatRp(fin['Aceh Timur'].sh_cut)}</td></tr>
                         <tr style="background:#000; color:#FFD700;"><td colspan="3" style="border:1px solid #000; padding:15px; font-weight:900; text-align:right;">JATAH DIMAS (AKUMULASI SISA)</td><td style="border:1px solid #000; padding:15px; text-align:right; font-weight:900; font-size:18px;">${APP.formatRp(fin.ALL.dimas_total)}</td></tr>
                     </table>
-                    <p style="font-size:11px; color:#555; font-style:italic; margin-top:20px;">*Laba bersih masing-masing daerah dihitung dari Omset Kotor dikurangi pengeluaran operasional manual dan biaya Drop Point (Khusus Sabang & Atim) yang dikalkulasi secara otomatis oleh sistem.</p>
+                    <p style="font-size:11px; color:#555; font-style:italic; margin-top:20px;">*Laba bersih dihitung setelah pemotongan operasional manual dan biaya Drop Point (Khusus Sabang & Atim).</p>
                     `;
-                } else {
-                    // Generate Logs Table for selected branch/ALL
-                    let rowHTML = '';
-                    STATE.logs.forEach(l => {
-                        const dateStr = (l.jam_mulai_sewa||'').substring(0,7); 
-                        let b = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
-                        if ((type === 'ALL' || b === type) && dateStr === month && !['batal', 'pending'].includes(String(l.status_unit_arena).toLowerCase())) {
-                            let val = (Number(l.tagihan_arena)||0) + (Number(l.ongkir_arena||l.ongkir)||0);
-                            rowHTML += `<tr><td style="border:1px solid #ccc; padding:8px;">${(l.jam_mulai_sewa||'').substring(0,10)}</td><td style="border:1px solid #ccc; padding:8px;">${b} / U${l.unit_arena}</td><td style="border:1px solid #ccc; padding:8px;">${l.nama_pelanggan_arena}</td><td style="border:1px solid #ccc; padding:8px; text-align:right; font-weight:bold;">${APP.formatRp(val)}</td></tr>`;
-                        }
+                } 
+                else if (type.startsWith('SH_')) {
+                    // CETAK SLIP INDIVIDU (SULTAN MODE)
+                    let targetBranch = type === 'SH_NIBRAS' ? 'Banda' : (type === 'SH_BLOK' ? 'Sabang' : (type === 'SH_FARID' ? 'Aceh Timur' : 'ALL'));
+                    let shName = type.replace('SH_', '');
+                    let bData = type === 'SH_DIMAS' ? fin.ALL : fin[targetBranch];
+                    let shCut = type === 'SH_DIMAS' ? fin.ALL.dimas_total : bData.sh_cut;
+                    let shPct = type === 'SH_DIMAS' ? 'Sisa Akumulasi Seluruh Cabang' : `${bData.sh_pct * 100}% dari Laba Bersih`;
+                    
+                    let dpAmount = type === 'SH_DIMAS' ? fin.ALL.dp_total : (bData.dp_fee + bData.dp_comm);
+
+                    // Slip Info
+                    printHtml += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:2px solid #000; padding-bottom:10px;">
+                        <div>
+                            <p style="margin:2px 0;"><b>No. Referensi:</b> ${slipId}</p>
+                            <p style="margin:2px 0;"><b>Tanggal Cetak:</b> ${printDate}</p>
+                            <p style="margin:2px 0;"><b>Periode:</b> ${monthLabel}</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <p style="margin:2px 0; font-size:16px;">Penerima: <b>${shName}</b></p>
+                            <p style="margin:2px 0;">Cabang: <b>${targetBranch === 'Banda' ? 'Banda Aceh' : targetBranch}</b></p>
+                            <p style="margin:2px 0;">Porsi Bagi Hasil: <b>${shPct}</b></p>
+                        </div>
+                    </div>`;
+
+                    // Financial Summary Box
+                    printHtml += `
+                    <div style="border: 2px solid #000; padding:15px; background:#f9fafb; margin-bottom:20px; border-radius:8px;">
+                        <h3 style="margin-top:0; font-size:14px; text-transform:uppercase;">Ringkasan Keuangan (${targetBranch})</h3>
+                        <table style="width:100%; font-size:14px; margin-bottom:10px;">
+                            <tr><td style="padding:4px 0;">Omset Kotor (Termasuk Ongkir)</td><td style="text-align:right;">${APP.formatRp(bData.gross)}</td></tr>
+                            <tr><td style="padding:4px 0;">Total Pengeluaran Manual</td><td style="text-align:right; color:red;">-${APP.formatRp(bData.expense)}</td></tr>
+                            <tr><td style="padding:4px 0;">Biaya Sistem & Drop Point</td><td style="text-align:right; color:red;">-${APP.formatRp(dpAmount)}</td></tr>
+                            <tr><td colspan="2"><hr style="border-top:1px dashed #ccc; margin:5px 0;"></td></tr>
+                            <tr><td style="padding:4px 0; font-weight:bold;">Laba Bersih Keseluruhan</td><td style="text-align:right; font-weight:bold;">${APP.formatRp(bData.net)}</td></tr>
+                        </table>
+                        <div style="background:#000; color:#fff; padding:15px; text-align:center; border-radius:6px; margin-top:15px;">
+                            <p style="margin:0; font-size:12px; color:#ccc; text-transform:uppercase; letter-spacing:1px;">Total Dividen Ditransfer Ke ${shName}</p>
+                            <p style="margin:5px 0 0 0; font-size:24px; font-weight:900; color:#4ade80;">${APP.formatRp(shCut)}</p>
+                        </div>
+                    </div>`;
+
+                    // Lampiran Pengeluaran
+                    let expRows = '';
+                    bData.exp_logs.forEach(e => {
+                        let bLabel = targetBranch === 'ALL' ? `(${e.proper_branch}) ` : '';
+                        expRows += `<tr><td style="border:1px solid #ccc; padding:6px;">${e.tanggal_pengeluaran_arena||e.tanggal_pengeluaran||'-'}</td><td style="border:1px solid #ccc; padding:6px;">${bLabel}${e.pengeluaran_arena}</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${APP.formatRp(e.jumlah_pengeluaran_arena||e.jumlah_pengeluaran)}</td></tr>`;
                     });
+                    printHtml += `<h4 style="margin-bottom:5px; font-size:12px;">LAMPIRAN 1: Rincian Pengeluaran</h4>`;
+                    printHtml += `<table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:20px;">
+                        <tr style="background:#eee;"><th style="border:1px solid #ccc; padding:6px; text-align:left;">Tanggal</th><th style="border:1px solid #ccc; padding:6px; text-align:left;">Deskripsi</th><th style="border:1px solid #ccc; padding:6px; text-align:right;">Nominal</th></tr>
+                        ${expRows || '<tr><td colspan="3" style="text-align:center; padding:6px;">Tidak ada pengeluaran manual.</td></tr>'}
+                    </table>`;
+
+                    // Lampiran Transaksi
+                    let orderRows = '';
+                    bData.order_logs.forEach(l => {
+                        let bLabel = targetBranch === 'ALL' ? `(${l.proper_branch}) ` : '';
+                        orderRows += `<tr><td style="border:1px solid #ccc; padding:6px;">${(l.jam_mulai_sewa||'').substring(0,10)}</td><td style="border:1px solid #ccc; padding:6px;">${bLabel}U${l.unit_arena} - ${l.nama_pelanggan_arena}</td><td style="border:1px solid #ccc; padding:6px;">${l.paket_arena}</td><td style="border:1px solid #ccc; padding:6px; text-align:right;">${APP.formatRp(l.final_val)}</td></tr>`;
+                    });
+                    printHtml += `<h4 style="margin-bottom:5px; font-size:12px;">LAMPIRAN 2: Log Transaksi Sukses</h4>`;
+                    printHtml += `<table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:40px;">
+                        <tr style="background:#eee;"><th style="border:1px solid #ccc; padding:6px; text-align:left;">Tanggal</th><th style="border:1px solid #ccc; padding:6px; text-align:left;">Unit & Pelanggan</th><th style="border:1px solid #ccc; padding:6px; text-align:left;">Paket</th><th style="border:1px solid #ccc; padding:6px; text-align:right;">Total Tagihan</th></tr>
+                        ${orderRows || '<tr><td colspan="4" style="text-align:center; padding:6px;">Tidak ada transaksi.</td></tr>'}
+                    </table>`;
+
+                    // Signature Area
+                    printHtml += `
+                    <div style="display:flex; justify-content:space-between; margin-top:30px; font-size:12px;">
+                        <div style="text-align:center; width:200px;">
+                            <p style="margin-bottom:60px;">Disiapkan Oleh,</p>
+                            <p style="font-weight:bold; border-bottom:1px solid #000; padding-bottom:2px;">${STATE.user.username.toUpperCase()}</p>
+                            <p style="margin:0;">Arena System Manager</p>
+                        </div>
+                        <div style="text-align:center; width:200px;">
+                            <p style="margin-bottom:60px;">Diterima Oleh,</p>
+                            <p style="font-weight:bold; border-bottom:1px solid #000; padding-bottom:2px;">${shName.toUpperCase()}</p>
+                            <p style="margin:0;">Shareholder</p>
+                        </div>
+                    </div>`;
+
+                } 
+                else {
+                    // CETAK REPORT GENERAL / CABANG (LAPORAN LAMA TAPI DIRAPIHIN)
+                    printHtml += `<h2 style="text-align:center; font-size:14px; margin-bottom:30px; font-weight:normal; border-bottom:2px solid #000; padding-bottom:10px;">Periode: <b>${monthLabel}</b> | Cabang: <b>${type === 'ALL' ? 'Semua Cabang (Global)' : type}</b></h2>`;
 
                     let bData = type === 'ALL' ? fin.ALL : fin[type];
                     let dpAmount = type === 'ALL' ? fin.ALL.dp_total : (fin[type].dp_fee + fin[type].dp_comm);
 
+                    // Financial Calc
                     printHtml += `
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:30px;">
-                        <div style="flex:1;">
-                            <h3 style="font-size:14px; margin-bottom:10px; border-bottom:2px solid #000; display:inline-block;">Rincian Log Transaksi</h3>
-                            <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11px;">
-                                <tr style="background:#000; color:#fff;"><th style="border:1px solid #000; padding:8px;">Tanggal</th><th style="border:1px solid #000; padding:8px;">Unit</th><th style="border:1px solid #000; padding:8px;">Pelanggan</th><th style="border:1px solid #000; padding:8px; text-align:right;">Tagihan (+Ongkir)</th></tr>
-                                ${rowHTML || '<tr><td colspan="4" style="text-align:center; padding:10px;">Tidak ada transaksi di bulan ini.</td></tr>'}
-                            </table>
-                        </div>
-                        
-                        <div style="width: 300px; border: 3px solid #000; padding: 15px; border-radius: 8px; background:#f9fafb;">
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+                        <div style="width: 350px; border: 3px solid #000; padding: 15px; border-radius: 8px; background:#f9fafb;">
                             <h3 style="font-size:14px; text-align:center; margin-top:0; margin-bottom:15px; text-transform:uppercase;">Kalkulasi Laba</h3>
                             <table style="width:100%; font-size:12px;">
                                 <tr><td style="padding-bottom:5px;">Omset Kotor</td><td style="text-align:right; font-weight:bold; color:green; padding-bottom:5px;">${APP.formatRp(bData.gross)}</td></tr>
@@ -962,12 +1059,33 @@
                         </div>
                     </div>
                     `;
+
+                    // Order Logs Table
+                    let rowHTML = '';
+                    bData.order_logs.forEach(l => {
+                        let bLabel = type === 'ALL' ? `(${l.proper_branch}) ` : '';
+                        rowHTML += `<tr><td style="border:1px solid #ccc; padding:6px;">${(l.jam_mulai_sewa||'').substring(0,10)}</td><td style="border:1px solid #ccc; padding:6px;">${bLabel}U${l.unit_arena}</td><td style="border:1px solid #ccc; padding:6px;">${l.nama_pelanggan_arena}</td><td style="border:1px solid #ccc; padding:6px; text-align:right; font-weight:bold;">${APP.formatRp(l.final_val)}</td></tr>`;
+                    });
+
+                    printHtml += `
+                    <h3 style="font-size:14px; margin-bottom:10px; border-bottom:2px solid #000; display:inline-block;">Rincian Log Transaksi</h3>
+                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11px; margin-bottom:40px;">
+                        <tr style="background:#000; color:#fff;"><th style="border:1px solid #000; padding:6px;">Tanggal</th><th style="border:1px solid #000; padding:6px;">Unit</th><th style="border:1px solid #000; padding:6px;">Pelanggan</th><th style="border:1px solid #000; padding:6px; text-align:right;">Tagihan (+Ongkir)</th></tr>
+                        ${rowHTML || '<tr><td colspan="4" style="text-align:center; padding:10px;">Tidak ada transaksi di bulan ini.</td></tr>'}
+                    </table>`;
+
+                    printHtml += `
+                    <div style="text-align: right; font-size: 12px;">
+                        <p>Dicetak Oleh: <b>${STATE.user.username.toUpperCase()}</b></p>
+                        <p>Waktu Cetak: ${printDate}</p>
+                    </div>`;
                 }
 
+                // WATERMARK BEUNA AGENCY PADA HALAMAN PRINT A4
                 printHtml += `
-                    <div style="margin-top: 40px; text-align: right; font-size: 12px;">
-                        <p>Dicetak Oleh: <b>${STATE.user.username.toUpperCase()}</b></p>
-                        <p>Waktu Cetak: ${new Date().toLocaleString('id-ID')}</p>
+                    <div style="margin-top: 50px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: 'Inter', sans-serif;">
+                        <p style="font-size: 8px; color: #9ca3af; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">System By</p>
+                        <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/beuna-agency/main/beuna%20logo%20png.png" alt="Beuna Agency" style="height: 16px; opacity: 0.8; filter: grayscale(100%);">
                     </div>
                 </div>`;
 
@@ -975,6 +1093,42 @@
                 document.getElementById('print-area').classList.remove('hidden'); 
                 window.print(); 
                 document.getElementById('print-area').classList.add('hidden');
+            },
+
+            renderOwner: () => {
+                document.getElementById('view-owner').classList.remove('hidden');
+                const branchStr = STATE.user.branch; const todayStr = APP.getTodayStr(); const monthStr = APP.getMonthStr(); 
+                let omsetToday = 0; let omsetMonth = 0;
+                
+                const ownerLogs = STATE.logs.filter(l => {
+                    const dateStr = (l.jam_mulai_sewa || '').substring(0,10);
+                    return (l.cabang_arena === branchStr || (branchStr==='Banda Aceh' && l.cabang_arena==='Banda')) && dateStr.startsWith(monthStr) && !['batal', 'pending'].includes(String(l.status_unit_arena).toLowerCase());
+                });
+
+                ownerLogs.forEach(l => {
+                    if ((l.jam_mulai_sewa||'').substring(0,10) === todayStr) omsetToday += Number(l.tagihan_arena);
+                    omsetMonth += Number(l.tagihan_arena);
+                });
+
+                document.getElementById('owner-omset-today').innerText = APP.formatRp(omsetToday); document.getElementById('owner-omset-month').innerText = APP.formatRp(omsetMonth);
+                
+                const daysName = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+                document.getElementById('owner-logs').innerHTML = ownerLogs.reverse().map(l => {
+                    let dayStr = '';
+                    if (l.jam_mulai_sewa) {
+                        const dObj = new Date(l.jam_mulai_sewa.replace(' ', 'T'));
+                        if (!isNaN(dObj)) dayStr = daysName[dObj.getDay()];
+                    }
+                    return `
+                    <div class="mario-card p-3 bg-white flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-black text-sm text-[#FF6B00] leading-none mb-1">${dayStr}</p>
+                            <p class="font-black">${l.nama_pelanggan_arena} <span class="bg-gray-200 px-1 rounded text-[10px]">U${l.unit_arena}</span></p>
+                            <p class="text-[10px] text-gray-500 font-bold">${(l.jam_mulai_sewa||'').substring(0,16)}</p>
+                        </div>
+                        <div class="text-right"><p class="font-black text-green-600">${APP.formatRp(l.tagihan_arena)}</p><p class="text-[10px] font-bold text-gray-400">${l.paket_arena}</p></div>
+                    </div>`
+                }).join('') || '<p class="text-center text-white font-bold">Tidak ada riwayat.</p>';
             }
         };
         APP.init();
