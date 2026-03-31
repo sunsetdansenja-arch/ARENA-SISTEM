@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V5.6 - Corporate Dividend & Report</title>
+    <title>ARENA SYSTEM V5.7 - Omni-Analytics Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,7 +60,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.6 | Silakan Login</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.7 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -101,6 +101,20 @@
         </section>
 
     </main>
+
+    <div id="modal-acc" class="modal-overlay hidden">
+        <div class="mario-card p-6 w-full max-w-sm animate-pop text-center">
+            <h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pilih Unit ✅</h2>
+            <div class="space-y-3 text-left">
+                <label class="text-xs font-bold block">Alokasikan pesanan ini ke:</label>
+                <select id="acc-modal-unit" class="mario-input p-2 text-sm font-black"></select>
+                <div class="flex gap-2 mt-4">
+                    <button onclick="APP.closeModal('modal-acc')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Batal</button>
+                    <button onclick="APP.confirmAccBooking()" class="mario-btn bg-green-500 text-white p-3 flex-1 text-sm border-green-700">GAS ACC 🚀</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="modal-cancel" class="modal-overlay hidden">
         <div class="mario-card p-6 w-full max-w-sm animate-pop">
@@ -155,13 +169,14 @@
 
         const STATE = { 
             user: null, logs: [], expenses: [], activeTab: 'logs', lastFinalPrice: 0,
-            activeModalRowId: null, activeModalStat: null, activeModalUnit: null, activeModalPay: null
+            activeModalRowId: null, activeModalStat: null, activeModalUnit: null, activeModalPay: null,
+            activeAccId: null, activeAccPay: null
         };
 
         const APP = {
             init: () => {
                 document.getElementById('form-login').addEventListener('submit', APP.handleLogin);
-                const saved = localStorage.getItem('arena_user_v56');
+                const saved = localStorage.getItem('arena_user_v57');
                 if (saved) { STATE.user = JSON.parse(saved); APP.loadDashboard(); }
             },
             showLoader: (t) => { document.getElementById('loader-text').innerText = t; document.getElementById('loader').classList.remove('hidden'); },
@@ -183,12 +198,13 @@
                 return opts;
             },
 
-            getUnitStatus: (uNum) => {
-                const todayStr = APP.getTodayStr(); const tomorrowStr = APP.getTomorrowStr(); const yestStr = APP.getYesterdayStr();
+            // CEK STATUS UNIT BERDASARKAN TANGGAL TERTENTU
+            getUnitStatus: (uNum, targetDateStr) => {
+                const searchDate = targetDateStr || APP.getTodayStr();
                 const unitLogs = STATE.logs.filter(l => {
                     const logNum = String(l.unit_arena).replace(/\D/g, ''); 
                     const dStr = (l.jam_mulai_sewa||'').substring(0,10);
-                    return logNum === String(uNum) && (dStr === todayStr || dStr === tomorrowStr || dStr === yestStr);
+                    return logNum === String(uNum) && dStr === searchDate;
                 });
                 const isPlaying = unitLogs.some(l => ['playing', 'main'].includes(String(l.status_unit_arena).toLowerCase()));
                 const isBooked = unitLogs.some(l => ['booked', 'book'].includes(String(l.status_unit_arena).toLowerCase()));
@@ -197,7 +213,8 @@
                 return 'kosong';
             },
 
-            generateUnitOptionsHtml: (branch) => {
+            // GENERATE OPSI UNIT DINAMIS (CEK TANGGAL H+7)
+            generateUnitOptionsHtml: (branch, targetDateStr) => {
                 let units = [];
                 let b = String(branch).toLowerCase();
                 if(b.includes('sabang')) units = [1, 2];
@@ -206,7 +223,7 @@
                 else units = [1];
 
                 return units.map(u => {
-                    const stat = APP.getUnitStatus(u);
+                    const stat = APP.getUnitStatus(u, targetDateStr);
                     let label = `Unit ${u}`;
                     if (stat === 'main' || stat === 'book') { label += ` 🔴 (Terisi)`; } 
                     else { label += ` 🟢 (Kosong)`; }
@@ -243,11 +260,11 @@
                         if(rawUser.cabang_arena || rawUser.cabang) uBranch = rawUser.cabang_arena || rawUser.cabang;
                     }
                     STATE.user = { username: rawUser.id_user_arena || rawUser.Users || 'User', userType: uType, branch: uBranch };
-                    localStorage.setItem('arena_user_v56', JSON.stringify(STATE.user));
+                    localStorage.setItem('arena_user_v57', JSON.stringify(STATE.user));
                     APP.loadDashboard();
                 } else { alert("❌ Gagal Login. Periksa Username/Password."); }
             },
-            logout: () => { localStorage.removeItem('arena_user_v56'); location.reload(); },
+            logout: () => { localStorage.removeItem('arena_user_v57'); location.reload(); },
 
             loadDashboard: async () => {
                 APP.showLoader('SINKRONISASI...');
@@ -368,7 +385,10 @@
                 let data = { ALL: { t: 0, y: 0, m: 0 }, 'Sabang': { t: 0, y: 0, m: 0 }, 'Banda': { t: 0, y: 0, m: 0 }, 'Aceh Timur': { t: 0, y: 0, m: 0 } };
                 
                 let lostIncome = 0; let cancelStats = {};
-                let successHtml = ''; let cancelHtml = '';
+                let cancelHtml = '';
+                
+                // Group Sukses Per Daerah
+                let successGroup = { 'Banda': [], 'Sabang': [], 'Aceh Timur': [] };
 
                 const reversedLogs = [...STATE.logs].reverse();
                 reversedLogs.forEach(l => {
@@ -376,7 +396,7 @@
                     const val = Number(l.tagihan_arena) || 0;
                     const dateStr = (l.jam_mulai_sewa || '').substring(0,10);
                     const mStr = (l.jam_mulai_sewa || '').substring(0,7);
-                    const branch = l.cabang_arena === 'Banda Aceh' ? 'Banda' : l.cabang_arena;
+                    const branch = l.cabang_arena === 'Banda Aceh' ? 'Banda' : (l.cabang_arena === 'Atim' ? 'Aceh Timur' : l.cabang_arena);
                     const canceler = l.Users || 'Sistem';
 
                     if (mStr === monthStr) {
@@ -391,9 +411,7 @@
                             if (dateStr === todayStr) { data.ALL.t += val; if (data[branch]) data[branch].t += val; }
                             if (dateStr === yestStr) { data.ALL.y += val; if (data[branch]) data[branch].y += val; }
                             
-                            let badge = stat === 'playing' || stat === 'main' ? '🟢 PLAYING' : (stat === 'booked' ? '⏳ BOOKED' : '✅ FINISHED');
-                            let color = stat === 'playing' || stat === 'main' ? 'text-green-600' : 'text-[#FF6B00]';
-                            successHtml += APP.createMiniLogCard(l, color, badge);
+                            if(successGroup[branch]) successGroup[branch].push(l);
                         }
                     }
                 });
@@ -404,6 +422,27 @@
                         <span class="font-black text-xs text-red-600">${cancelStats[k].count}x (${APP.formatRp(cancelStats[k].total)})</span>
                     </div>
                 `).join('') || '<p class="text-[10px] text-gray-500 italic text-center">Belum ada pembatalan.</p>';
+
+                // Render Riwayat Sukses Dipecah Per Daerah
+                let successHtml = ['Banda', 'Sabang', 'Aceh Timur'].map(b => {
+                    if(successGroup[b].length === 0) return '';
+                    let list = successGroup[b].map(l => {
+                        let badge = ['playing','main'].includes(String(l.status_unit_arena).toLowerCase()) ? '🟢 PLAYING' : (['booked','book'].includes(String(l.status_unit_arena).toLowerCase()) ? '⏳ BOOKED' : '✅ FINISHED');
+                        let color = ['playing','main'].includes(String(l.status_unit_arena).toLowerCase()) ? 'text-green-600' : 'text-[#FF6B00]';
+                        return APP.createMiniLogCard(l, color, badge);
+                    }).join('');
+                    
+                    return `
+                    <div class="mb-5">
+                        <div class="bg-green-100 border-2 border-green-600 p-2 rounded-t-lg flex justify-between items-center">
+                            <h4 class="font-black text-[10px] text-green-900 uppercase">${b === 'Banda' ? 'BANDA ACEH' : b}</h4>
+                            <span class="font-black text-[10px] text-green-800 bg-white px-2 py-0.5 rounded shadow-sm">Omset: ${APP.formatRp(data[b].m)}</span>
+                        </div>
+                        <div class="border-2 border-green-600 border-t-0 p-2 rounded-b-lg space-y-2 bg-green-50">
+                            ${list}
+                        </div>
+                    </div>`;
+                }).join('') || '<p class="text-center text-xs text-gray-500 font-bold">Tidak ada data.</p>';
 
                 return `
                     <div class="mario-card p-4 animate-pop">
@@ -443,7 +482,7 @@
                         </div>
 
                         <h3 class="font-black text-xs mb-2 uppercase text-gray-800 bg-gray-200 px-3 py-1 rounded-full inline-block">✅ Riwayat Sukses (Bulan Ini)</h3>
-                        <div class="max-h-64 overflow-y-auto custom-scroll mb-6 pr-2">${successHtml || '<p class="text-center text-xs text-gray-500 font-bold">Tidak ada data.</p>'}</div>
+                        <div class="max-h-[500px] overflow-y-auto custom-scroll mb-6 pr-2">${successHtml}</div>
 
                         <h3 class="font-black text-xs mb-2 uppercase text-red-800 bg-red-200 px-3 py-1 rounded-full inline-block">❌ Riwayat Batal (Bulan Ini)</h3>
                         <div class="max-h-64 overflow-y-auto custom-scroll pr-2 pb-6">${cancelHtml || '<p class="text-center text-xs text-gray-500 font-bold">Tidak ada data batal.</p>'}</div>
@@ -484,6 +523,85 @@
                 return html + '</div>';
             },
 
+            renderSingleLogCard: (l) => {
+                const rowId = l.id || l.row_number || l._rowIndex;
+                const unitLabel = String(l.unit_arena).toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
+                const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
+
+                const daysName = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+                let dayStr = '';
+                if (l.jam_mulai_sewa) {
+                    const dObj = new Date(l.jam_mulai_sewa.replace(' ', 'T'));
+                    if (!isNaN(dObj)) dayStr = daysName[dObj.getDay()];
+                }
+                const waLink = l.link_wa_pelanggan_arena || 'https://wa.me/' + String(l.nomor_pelanggan_arena).replace(/^0/, '62');
+                const stat = String(l.status_unit_arena).toLowerCase();
+                const pay = l.pembayaran;
+
+                let cardClass = "border-2 border-black p-3 rounded-xl bg-white shadow-[2px_2px_0px_#000] relative";
+                let textClass = ""; let badgeHtml = "";
+
+                let payBtnClass = 'bg-red-400 text-white';
+                let payBtnText = '❌ BELUM';
+                if (pay === 'Lunas Cash') { payBtnClass = 'bg-green-400 text-black'; payBtnText = '💵 CASH'; }
+                else if (pay === 'Lunas Transfer') { payBtnClass = 'bg-blue-500 text-white'; payBtnText = '📱 TF'; }
+                else if (pay === 'Lunas' || pay === 'lunas') { payBtnClass = 'bg-green-400 text-black'; payBtnText = '✅ LUNAS'; }
+
+                if (stat === 'batal') {
+                    cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-200 opacity-60 relative";
+                    textClass = "line-through text-gray-500";
+                } else if (stat === 'booked' || stat === 'book') {
+                    cardClass = "border-2 border-yellow-500 p-3 rounded-xl bg-yellow-50 shadow-[2px_2px_0px_#eab308] relative";
+                } else if (stat === 'playing' || stat === 'main') {
+                    cardClass = "border-2 border-green-500 p-3 rounded-xl bg-green-50 shadow-[2px_2px_0px_#22c55e] relative";
+                    badgeHtml = `<span class="absolute top-3 right-3 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>`;
+                } else if (stat === 'finished' || stat === 'selesai') {
+                    if (pay === 'Belum' || !pay) {
+                        cardClass = "border-4 border-red-600 p-3 rounded-xl bg-red-50 shadow-[2px_2px_0px_#dc2626] relative";
+                        badgeHtml = `<div class="bg-red-600 text-white text-[9px] font-black px-2 py-1 absolute top-0 right-0 rounded-bl-lg rounded-tr-lg animate-pulse shadow-md">⚠️ BELUM BAYAR</div>`;
+                    } else {
+                        cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-100 shadow-[2px_2px_0px_gray] relative";
+                    }
+                }
+
+                const ongkirValue = l.ongkir || l.ongkir_arena || 0;
+                const ongkirLabel = Number(ongkirValue) > 0 ? `<span class="text-[9px] font-bold text-blue-600 bg-blue-100 px-1 border border-blue-300 rounded ml-1">+ Ongkir ${APP.formatRp(ongkirValue)}</span>` : '';
+
+                return `
+                <div class="${cardClass} mb-2">
+                    ${badgeHtml}
+                    <div class="flex justify-between items-start mb-2 border-b-2 border-dashed border-gray-300 pb-2">
+                        <div class="flex flex-col">
+                            <span class="font-black text-xl text-[#FF6B00] leading-none mb-1 ${textClass}">${dayStr}</span>
+                            <span class="font-bold text-[10px] text-gray-500">${l.jam_mulai_sewa || ''}</span>
+                        </div>
+                        <span class="font-black text-[10px] bg-black text-white px-2 py-1 rounded-md h-fit mt-1">${unitLabel} (${cabLabel})</span>
+                    </div>
+                    <p class="font-bold text-sm uppercase ${textClass}">${l.nama_pelanggan_arena} <span class="text-[10px] text-gray-500 normal-case ml-1">${l.nomor_pelanggan_arena || ''}</span></p>
+                    <div class="flex justify-between items-end mt-1">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-semibold text-gray-700 ${textClass}">${l.paket_arena}</span>
+                            ${ongkirLabel}
+                        </div>
+                        <span class="text-sm font-black text-orange-600 ${textClass}">${APP.formatRp(l.tagihan_arena)}</span>
+                    </div>
+                    <div class="flex gap-1 mt-3 pt-2 border-t border-gray-200">
+                        <select data-old-value="${stat}" onchange="APP.handleStatusChange(this, '${rowId}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-input p-1 text-[9px] w-1/3 font-bold">
+                            <option value="booked" ${stat==='booked'?'selected':''}>BOOKED</option>
+                            <option value="playing" ${stat==='playing'?'selected':''}>PLAYING</option>
+                            <option value="finished" ${stat==='finished'?'selected':''}>FINISHED</option>
+                            <option value="batal" ${stat==='batal'?'selected':''}>BATAL ❌</option>
+                        </select>
+                        <button onclick="APP.handlePaymentClick('${rowId}', '${l.status_unit_arena}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-btn p-1 text-[9px] w-1/3 ${payBtnClass}">
+                            ${payBtnText}
+                        </button>
+                        <a href="${waLink}" target="_blank" class="mario-btn p-1 text-[10px] w-1/3 bg-[#25D366] text-white flex items-center justify-center font-black">
+                            💬 WA
+                        </a>
+                    </div>
+                </div>`;
+            },
+
             renderLogsUI: () => {
                 const pendingLogs = STATE.logs.filter(l => String(l.status_unit_arena).toLowerCase() === 'pending');
                 let pendingHtml = '';
@@ -496,8 +614,8 @@
                             ${pendingLogs.map(l => {
                                 const rowId = l.id || l.row_number || l._rowIndex;
                                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
+                                const tglMainStr = (l.jam_mulai_sewa||'').substring(0,10);
                                 
-                                const optUnit = APP.generateUnitOptionsHtml(l.cabang_arena);
                                 const ongkirValue = l.ongkir || l.ongkir_arena || 0;
                                 const ongkirTxt = Number(ongkirValue) > 0 ? ` <br><span class="text-blue-600 text-xs">+ Ongkir ${APP.formatRp(ongkirValue)}</span>` : '';
 
@@ -507,10 +625,11 @@
                                         <p class="font-black text-sm uppercase">${l.nama_pelanggan_arena}</p>
                                         <p class="font-black text-sm text-[#FF6B00] text-right">${APP.formatRp(l.tagihan_arena)}${ongkirTxt}</p>
                                     </div>
-                                    <p class="text-[10px] font-bold text-gray-600 mb-2">Pesan: ${l.paket_arena} | ${cabLabel}</p>
-                                    <div class="flex gap-2 mt-2">
-                                        <select id="acc-unit-${rowId}" class="mario-input p-2 text-xs font-black flex-1 border-red-400 focus:border-red-600">${optUnit}</select>
-                                        <button onclick="APP.accBooking('${rowId}', '${l.pembayaran}')" class="mario-btn bg-green-500 text-white p-2 text-xs font-black px-2 flex-1 hover:bg-green-600 border-green-700">ACC ✅</button>
+                                    <p class="text-[10px] font-bold text-gray-600 mb-1">Pesan: ${l.paket_arena} | ${cabLabel}</p>
+                                    <p class="text-[10px] font-bold text-red-600 mb-3 bg-red-100 inline-block px-2 py-0.5 rounded">Main: ${l.jam_mulai_sewa||'-'}</p>
+                                    
+                                    <div class="flex gap-2 mt-2 border-t-2 border-dashed border-gray-300 pt-2">
+                                        <button onclick="APP.openAccModal('${rowId}', '${l.pembayaran}', '${l.cabang_arena}', '${tglMainStr}')" class="mario-btn bg-green-500 text-white p-2 text-xs font-black px-2 flex-1 hover:bg-green-600 border-green-700">ACC PESANAN ✅</button>
                                         <button onclick="APP.showCancelModal('${rowId}', '${l.pembayaran}', 'Batal')" class="mario-btn bg-red-500 text-white p-2 text-xs font-black px-2 flex-1 hover:bg-red-600 border-red-700">TOLAK ❌</button>
                                     </div>
                                 </div>`;
@@ -535,106 +654,54 @@
                 `;
             },
 
-            updateLogList: () => {
-                const selCabang = document.getElementById('log-filter-cabang').value;
-                document.getElementById('filtered-logs-container').innerHTML = APP.getLogListHTML(selCabang);
-            },
-
             getLogListHTML: (cabangFilter) => {
                 const todayStr = APP.getTodayStr(); const yestStr = APP.getYesterdayStr(); const tomorrowStr = APP.getTomorrowStr();
                 const recentLogs = STATE.logs.filter(l => { const d = (l.jam_mulai_sewa||'').substring(0,10); return d === todayStr || d === yestStr || d === tomorrowStr; });
-                const filtered = recentLogs.filter(l => (cabangFilter === 'ALL' || l.cabang_arena === cabangFilter || l.cabang_arena === (cabangFilter === 'Banda Aceh' ? 'Banda' : cabangFilter)) && String(l.status_unit_arena).toLowerCase() !== 'pending');
-                const daysName = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+                const filtered = recentLogs.filter(l => String(l.status_unit_arena).toLowerCase() !== 'pending');
 
-                return filtered.reverse().map(l => {
-                    const rowId = l.id || l.row_number || l._rowIndex;
-                    const unitLabel = String(l.unit_arena).toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
-                    const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
-
-                    let dayStr = '';
-                    if (l.jam_mulai_sewa) {
-                        const dObj = new Date(l.jam_mulai_sewa.replace(' ', 'T'));
-                        if (!isNaN(dObj)) dayStr = daysName[dObj.getDay()];
-                    }
-                    const waLink = l.link_wa_pelanggan_arena || 'https://wa.me/' + String(l.nomor_pelanggan_arena).replace(/^0/, '62');
-
-                    const stat = String(l.status_unit_arena).toLowerCase();
-                    const pay = l.pembayaran;
-
-                    let cardClass = "border-2 border-black p-3 rounded-xl bg-white shadow-[2px_2px_0px_#000] relative";
-                    let textClass = ""; let badgeHtml = "";
-
-                    let payBtnClass = 'bg-red-400 text-white';
-                    let payBtnText = '❌ BELUM';
-                    if (pay === 'Lunas Cash') { payBtnClass = 'bg-green-400 text-black'; payBtnText = '💵 CASH'; }
-                    else if (pay === 'Lunas Transfer') { payBtnClass = 'bg-blue-500 text-white'; payBtnText = '📱 TF'; }
-                    else if (pay === 'Lunas' || pay === 'lunas') { payBtnClass = 'bg-green-400 text-black'; payBtnText = '✅ LUNAS'; }
-
-                    if (stat === 'batal') {
-                        cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-200 opacity-60 relative";
-                        textClass = "line-through text-gray-500";
-                    } else if (stat === 'booked' || stat === 'book') {
-                        cardClass = "border-2 border-yellow-500 p-3 rounded-xl bg-yellow-50 shadow-[2px_2px_0px_#eab308] relative";
-                    } else if (stat === 'playing' || stat === 'main') {
-                        cardClass = "border-2 border-green-500 p-3 rounded-xl bg-green-50 shadow-[2px_2px_0px_#22c55e] relative";
-                        badgeHtml = `<span class="absolute top-3 right-3 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>`;
-                    } else if (stat === 'finished' || stat === 'selesai') {
-                        if (pay === 'Belum' || !pay) {
-                            cardClass = "border-4 border-red-600 p-3 rounded-xl bg-red-50 shadow-[2px_2px_0px_#dc2626] relative";
-                            badgeHtml = `<div class="bg-red-600 text-white text-[9px] font-black px-2 py-1 absolute top-0 right-0 rounded-bl-lg rounded-tr-lg animate-pulse shadow-md">⚠️ BELUM BAYAR</div>`;
-                        } else {
-                            cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-100 shadow-[2px_2px_0px_gray] relative";
+                if (cabangFilter === 'ALL') {
+                    let groupedHtml = '';
+                    ['Banda', 'Sabang', 'Aceh Timur'].forEach(b => {
+                        const bLogs = filtered.filter(l => l.cabang_arena === b || (b==='Banda'&&l.cabang_arena==='Banda Aceh') || (b==='Aceh Timur'&&l.cabang_arena==='Atim'));
+                        if (bLogs.length > 0) {
+                            let listStr = bLogs.reverse().map(l => APP.renderSingleLogCard(l)).join('');
+                            groupedHtml += `
+                                <div class="mb-4">
+                                    <h4 class="font-black text-[10px] bg-black text-white p-2 rounded-t-lg uppercase">${b === 'Banda' ? 'BANDA ACEH' : b}</h4>
+                                    <div class="border-2 border-black border-t-0 p-2 rounded-b-lg bg-gray-50">${listStr}</div>
+                                </div>`;
                         }
-                    }
-
-                    const ongkirValue = l.ongkir || l.ongkir_arena || 0;
-                    const ongkirLabel = Number(ongkirValue) > 0 ? `<span class="text-[9px] font-bold text-blue-600 bg-blue-100 px-1 border border-blue-300 rounded ml-1">+ Ongkir ${APP.formatRp(ongkirValue)}</span>` : '';
-
-                    return `
-                    <div class="${cardClass}">
-                        ${badgeHtml}
-                        <div class="flex justify-between items-start mb-2 border-b-2 border-dashed border-gray-300 pb-2">
-                            <div class="flex flex-col">
-                                <span class="font-black text-xl text-[#FF6B00] leading-none mb-1 ${textClass}">${dayStr}</span>
-                                <span class="font-bold text-[10px] text-gray-500">${l.jam_mulai_sewa || ''}</span>
-                            </div>
-                            <span class="font-black text-[10px] bg-black text-white px-2 py-1 rounded-md h-fit mt-1">${unitLabel} (${cabLabel})</span>
-                        </div>
-                        <p class="font-bold text-sm uppercase ${textClass}">${l.nama_pelanggan_arena} <span class="text-[10px] text-gray-500 normal-case ml-1">${l.nomor_pelanggan_arena || ''}</span></p>
-                        <div class="flex justify-between items-end mt-1">
-                            <div class="flex flex-col">
-                                <span class="text-xs font-semibold text-gray-700 ${textClass}">${l.paket_arena}</span>
-                                ${ongkirLabel}
-                            </div>
-                            <span class="text-sm font-black text-orange-600 ${textClass}">${APP.formatRp(l.tagihan_arena)}</span>
-                        </div>
-                        <div class="flex gap-1 mt-3 pt-2 border-t border-gray-200">
-                            <select data-old-value="${stat}" onchange="APP.handleStatusChange(this, '${rowId}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-input p-1 text-[9px] w-1/3 font-bold">
-                                <option value="booked" ${stat==='booked'?'selected':''}>BOOKED</option>
-                                <option value="playing" ${stat==='playing'?'selected':''}>PLAYING</option>
-                                <option value="finished" ${stat==='finished'?'selected':''}>FINISHED</option>
-                                <option value="batal" ${stat==='batal'?'selected':''}>BATAL ❌</option>
-                            </select>
-                            <button onclick="APP.handlePaymentClick('${rowId}', '${l.status_unit_arena}', '${l.pembayaran}', '${l.unit_arena}')" class="mario-btn p-1 text-[9px] w-1/3 ${payBtnClass}">
-                                ${payBtnText}
-                            </button>
-                            <a href="${waLink}" target="_blank" class="mario-btn p-1 text-[10px] w-1/3 bg-[#25D366] text-white flex items-center justify-center font-black">
-                                💬 WA
-                            </a>
-                        </div>
-                    </div>`;
-                }).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
+                    });
+                    return groupedHtml || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
+                } else {
+                    const bLogs = filtered.filter(l => l.cabang_arena === cabangFilter || (cabangFilter==='Banda'&&l.cabang_arena==='Banda Aceh') || (cabangFilter==='Aceh Timur'&&l.cabang_arena==='Atim'));
+                    return bLogs.reverse().map(l => APP.renderSingleLogCard(l)).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
+                }
             },
 
-            accBooking: async (id, currentPay) => {
-                const unitSel = document.getElementById(`acc-unit-${id}`).value;
+            openAccModal: (id, pay, branch, dateStr) => {
+                STATE.activeAccId = id;
+                STATE.activeAccPay = pay;
+                document.getElementById('acc-modal-unit').innerHTML = APP.generateUnitOptionsHtml(branch, dateStr);
+                document.getElementById('modal-acc').classList.remove('hidden');
+            },
+
+            confirmAccBooking: async () => {
+                const unitSel = document.getElementById('acc-modal-unit').value;
+                APP.closeModal('modal-acc');
                 APP.showLoader('MENGKONFIRMASI...');
-                await APP.api({ action: 'update_status', row_id: id, status_unit: 'booked', pembayaran: currentPay, unit: unitSel, admin_name: STATE.user.username, keterangan: '' });
+                await APP.api({ action: 'update_status', row_id: STATE.activeAccId, status_unit: 'booked', pembayaran: STATE.activeAccPay, unit: unitSel, admin_name: STATE.user.username, keterangan: '' });
                 await APP.loadDashboard();
             },
 
             renderInputForm: () => {
                 const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                const minDate = now.toISOString().slice(0,16);
+                
+                const maxD = new Date(now);
+                maxD.setDate(maxD.getDate() + 7);
+                const maxDate = maxD.toISOString().slice(0,16);
+
                 const b = STATE.user.branch || ''; 
                 return `
                 <div class="mario-card p-5 animate-pop">
@@ -666,7 +733,7 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[10px] font-bold">WAKTU MULAI SEWA</label><input type="datetime-local" id="r-datetime" value="${now.toISOString().slice(0,16)}" required class="mario-input p-2 text-sm"></div>
+                            <div><label class="text-[10px] font-bold text-blue-700">TGL/WAKTU MAIN (Maks H+7)</label><input type="datetime-local" id="r-datetime" value="${minDate}" min="${minDate}" max="${maxDate}" onchange="APP.updateUnitOptions()" required class="mario-input p-2 text-sm border-blue-500"></div>
                             <div><label class="text-[10px] font-bold text-red-600">DISKON (Rp)</label><input type="number" id="r-diskon" placeholder="0" min="0" onkeyup="APP.updatePrice()" onchange="APP.updatePrice()" class="mario-input p-2 text-sm border-red-500 focus:border-red-600"></div>
                         </div>
 
@@ -689,12 +756,14 @@
                 const branch = document.getElementById('r-branch').value;
                 const unitSel = document.getElementById('r-unit');
                 const logistikBox = document.getElementById('logistik-admin-container');
+                const dateStr = document.getElementById('r-datetime').value.substring(0,10) || APP.getTodayStr();
+                
                 if(!unitSel) return;
                 
                 if (branch === 'Banda') { logistikBox.classList.remove('hidden'); } 
                 else { logistikBox.classList.add('hidden'); document.getElementById('r-ongkir').value = 0; document.getElementById('r-delivery').value = 'ambil'; }
 
-                unitSel.innerHTML = APP.generateUnitOptionsHtml(branch);
+                unitSel.innerHTML = APP.generateUnitOptionsHtml(branch, dateStr);
                 APP.updatePrice();
             },
 
@@ -756,7 +825,6 @@
             },
 
             renderExpenseForm: () => {
-                // Tampilkan log expense khusus bulan ini di bawah form
                 const monthStr = APP.getMonthStr();
                 const currentMonthExps = STATE.expenses.filter(e => {
                     const d = (e.tanggal_pengeluaran_arena || e.tanggal_pengeluaran || '').substring(0,7);
@@ -804,10 +872,10 @@
             // --- FINANCIAL ENGINE (FRONT-END) ---
             calculateFinancials: (monthStr) => {
                 let fin = {
-                    'Banda': { gross: 0, expense: 0, dp_fee: 0, dp_comm: 0, net: 0, sh_name: 'Nibras', sh_pct: 0.40, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [] },
-                    'Sabang': { gross: 0, expense: 0, dp_fee: 150000, dp_comm: 0, net: 0, sh_name: 'Blok', sh_pct: 0.50, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [] },
-                    'Aceh Timur': { gross: 0, expense: 0, dp_fee: 100000, dp_comm: 0, net: 0, sh_name: 'Farid', sh_pct: 0.50, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [] },
-                    'ALL': { gross: 0, expense: 0, dp_total: 0, net: 0, dimas_total: 0, exp_logs: [], order_logs: [] }
+                    'Banda': { gross: 0, expense: 0, dp_fee: 0, dp_comm: 0, net: 0, sh_name: 'Nibras', sh_pct: 0.40, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [], booking_mandiri: 0, booking_manual: 0 },
+                    'Sabang': { gross: 0, expense: 0, dp_fee: 150000, dp_comm: 0, net: 0, sh_name: 'Blok', sh_pct: 0.50, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [], booking_mandiri: 0, booking_manual: 0 },
+                    'Aceh Timur': { gross: 0, expense: 0, dp_fee: 100000, dp_comm: 0, net: 0, sh_name: 'Farid', sh_pct: 0.50, sh_cut: 0, dimas_cut: 0, exp_logs: [], order_logs: [], booking_mandiri: 0, booking_manual: 0 },
+                    'ALL': { gross: 0, expense: 0, dp_total: 0, net: 0, dimas_total: 0, exp_logs: [], order_logs: [], booking_mandiri: 0, booking_manual: 0 }
                 };
 
                 STATE.logs.forEach(l => {
@@ -820,6 +888,11 @@
                         fin[b].gross += totalTagihan;
                         fin[b].order_logs.push({...l, final_val: totalTagihan});
                         fin.ALL.order_logs.push({...l, final_val: totalTagihan, proper_branch: b});
+
+                        // Hitung Rasio Booking
+                        let isMandiri = (l.Users === 'Self-Booking') || (l.admin_name === 'Self-Booking');
+                        if (isMandiri) { fin[b].booking_mandiri++; fin.ALL.booking_mandiri++; } 
+                        else { fin[b].booking_manual++; fin.ALL.booking_manual++; }
                     }
                 });
 
@@ -941,6 +1014,10 @@
                     let bData = type === 'ALL' ? fin.ALL : fin[type];
                     let dpInfo = type === 'Banda' ? '' : `<p class="text-[10px] font-bold text-gray-500 border-t border-gray-300 pt-1 mt-1">BIAYA DROP POINT OTOMATIS: <span class="text-red-500">-${APP.formatRp(type === 'ALL' ? fin.ALL.dp_total : fin[type].dp_fee + fin[type].dp_comm)}</span></p>`;
                     
+                    let totalBookings = bData.booking_mandiri + bData.booking_manual;
+                    let pctMandiri = totalBookings > 0 ? Math.round((bData.booking_mandiri / totalBookings) * 100) : 0;
+                    let pctManual = totalBookings > 0 ? Math.round((bData.booking_manual / totalBookings) * 100) : 0;
+
                     html = `
                         <div class="space-y-2 text-left">
                             <div class="bg-gray-100 p-3 rounded-lg border-2 border-black flex justify-between items-center shadow-[2px_2px_0px_#000]">
@@ -957,6 +1034,19 @@
                             <div class="bg-black text-white p-4 rounded-xl border-2 border-black flex justify-between items-center shadow-[4px_4px_0px_#FFD700]">
                                 <span class="font-black text-xs uppercase text-yellow-400">Laba Bersih</span>
                                 <span class="font-black text-xl">${APP.formatRp(bData.net)}</span>
+                            </div>
+
+                            <div class="bg-blue-50 border-2 border-blue-400 p-3 rounded-xl mt-3 shadow-[2px_2px_0px_#3b82f6]">
+                                <p class="font-black text-[10px] text-blue-800 uppercase mb-2">📊 Rasio Sumber Booking</p>
+                                <div class="flex justify-between text-xs font-bold mb-1">
+                                    <span class="text-indigo-600">Web/Mandiri: ${pctMandiri}%</span>
+                                    <span class="text-gray-600">Admin: ${pctManual}%</span>
+                                </div>
+                                <div class="w-full bg-gray-300 rounded-full h-2.5 overflow-hidden flex">
+                                    <div class="bg-indigo-500 h-2.5" style="width: ${pctMandiri}%"></div>
+                                    <div class="bg-gray-500 h-2.5" style="width: ${pctManual}%"></div>
+                                </div>
+                                <p class="text-[9px] text-gray-500 mt-2 font-bold">${bData.booking_mandiri} trx Mandiri | ${bData.booking_manual} trx Admin</p>
                             </div>
                         </div>
                     `;
@@ -1035,7 +1125,7 @@
                         </div>
                     </div>`;
 
-                    // Signature Area (Dipindah ke halaman 1 biar rapi)
+                    // Signature Area
                     printHtml += `
                     <div style="display:flex; justify-content:space-between; margin-top:20px; margin-bottom: 20px; font-size:12px;">
                         <div style="text-align:center; width:200px;">
@@ -1083,9 +1173,19 @@
 
                     let bData = type === 'ALL' ? fin.ALL : fin[type];
                     let dpAmount = type === 'ALL' ? fin.ALL.dp_total : (fin[type].dp_fee + fin[type].dp_comm);
+                    let totalBookings = bData.booking_mandiri + bData.booking_manual;
+                    let pctMandiri = totalBookings > 0 ? Math.round((bData.booking_mandiri / totalBookings) * 100) : 0;
+                    let pctManual = totalBookings > 0 ? 100 - pctMandiri : 0;
 
                     printHtml += `
-                    <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <div style="width: 250px;">
+                            <h3 style="font-size:13px; text-transform:uppercase;">Rasio Booking</h3>
+                            <table style="width:100%; font-size:11px; margin-bottom:10px; border-collapse: collapse;">
+                                <tr><td style="border:1px solid #ccc; padding:4px;">Web (Mandiri)</td><td style="border:1px solid #ccc; padding:4px; font-weight:bold; text-align:right;">${bData.booking_mandiri} trx (${pctMandiri}%)</td></tr>
+                                <tr><td style="border:1px solid #ccc; padding:4px;">Admin (Manual)</td><td style="border:1px solid #ccc; padding:4px; font-weight:bold; text-align:right;">${bData.booking_manual} trx (${pctManual}%)</td></tr>
+                            </table>
+                        </div>
                         <div style="width: 350px; border: 3px solid #000; padding: 15px; border-radius: 8px; background:#f9fafb;">
                             <h3 style="font-size:14px; text-align:center; margin-top:0; margin-bottom:15px; text-transform:uppercase;">Kalkulasi Laba</h3>
                             <table style="width:100%; font-size:12px;">
