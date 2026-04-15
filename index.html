@@ -104,16 +104,10 @@
 
     <div id="modal-acc" class="modal-overlay hidden">
         <div class="mario-card p-6 w-full max-w-sm animate-pop text-center">
-            <h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Proses Pesanan ✅</h2>
+            <h2 class="text-xl font-black mb-4 border-b-2 border-black pb-2 text-green-600 uppercase">Pilih Unit ✅</h2>
             <div class="space-y-3 text-left">
-                <div>
-                    <label class="text-xs font-bold block text-blue-700 mb-1">1. Atur Tgl & Jam Main:</label>
-                    <input type="datetime-local" id="acc-modal-time" class="mario-input p-2 text-sm font-bold border-blue-500" required>
-                </div>
-                <div>
-                    <label class="text-xs font-bold block mb-1 mt-2">2. Alokasikan ke Unit:</label>
-                    <select id="acc-modal-unit" class="mario-input p-2 text-sm font-black"></select>
-                </div>
+                <label class="text-xs font-bold block">Alokasikan pesanan ini ke:</label>
+                <select id="acc-modal-unit" class="mario-input p-2 text-sm font-black"></select>
                 <div class="flex gap-2 mt-4">
                     <button onclick="APP.closeModal('modal-acc')" class="mario-btn bg-gray-200 text-gray-700 p-3 flex-1 text-sm border-gray-400">Batal</button>
                     <button onclick="APP.confirmAccBooking()" class="mario-btn bg-green-500 text-white p-3 flex-1 text-sm border-green-700">GAS ACC 🚀</button>
@@ -661,13 +655,8 @@
             },
 
             getLogListHTML: (cabangFilter) => {
-                const yestStr = APP.getYesterdayStr();
-                
-                // FIX: Menampilkan jadwal Kemarin, Hari Ini, dan SEMUA HARI di masa depan
-                const recentLogs = STATE.logs.filter(l => { 
-                    const d = (l.jam_mulai_sewa||'').substring(0,10); 
-                    return d >= yestStr && !d.toLowerCase().includes('menunggu'); 
-                });
+                const todayStr = APP.getTodayStr(); const yestStr = APP.getYesterdayStr(); const tomorrowStr = APP.getTomorrowStr();
+                const recentLogs = STATE.logs.filter(l => { const d = (l.jam_mulai_sewa||'').substring(0,10); return d === todayStr || d === yestStr || d === tomorrowStr; });
                 const filtered = recentLogs.filter(l => String(l.status_unit_arena).toLowerCase() !== 'pending');
 
                 if (cabangFilter === 'ALL') {
@@ -693,43 +682,15 @@
             openAccModal: (id, pay, branch, dateStr) => {
                 STATE.activeAccId = id;
                 STATE.activeAccPay = pay;
-                
-                // Auto-set waktu ke jam 12 siang hari ini jika tgl dari customer gak valid
-                let initDate = APP.getTodayStr() + 'T12:00';
-                if (dateStr && !dateStr.toLowerCase().includes('menunggu') && dateStr.length >= 10) {
-                    initDate = dateStr.substring(0,10) + 'T12:00';
-                }
-                const timeInput = document.getElementById('acc-modal-time');
-                if (timeInput) timeInput.value = initDate;
-                
                 document.getElementById('acc-modal-unit').innerHTML = APP.generateUnitOptionsHtml(branch, dateStr);
                 document.getElementById('modal-acc').classList.remove('hidden');
             },
 
             confirmAccBooking: async () => {
                 const unitSel = document.getElementById('acc-modal-unit').value;
-                const timeInput = document.getElementById('acc-modal-time');
-                let formattedDate = '';
-                
-                if (timeInput) {
-                    const rawDate = timeInput.value;
-                    if(!rawDate) { alert('Bos, tentukan jadwal mainnya dulu!'); return; }
-                    formattedDate = rawDate.replace('T', ' ') + (rawDate.length === 16 ? ':00' : '');
-                }
-
                 APP.closeModal('modal-acc');
                 APP.showLoader('MENGKONFIRMASI...');
-                
-                await APP.api({ 
-                    action: 'update_status', 
-                    row_id: STATE.activeAccId, 
-                    status_unit: 'booked', 
-                    pembayaran: STATE.activeAccPay || 'Belum', 
-                    unit: unitSel, 
-                    jam_mulai_sewa: formattedDate, // NGIRIM JADWAL BARU KE N8N
-                    admin_name: STATE.user.username, 
-                    keterangan: '' 
-                });
+                await APP.api({ action: 'update_status', row_id: STATE.activeAccId, status_unit: 'booked', pembayaran: STATE.activeAccPay, unit: unitSel, admin_name: STATE.user.username, keterangan: '' });
                 await APP.loadDashboard();
             },
 
@@ -1055,7 +1016,7 @@
                     
                     let totalBookings = bData.booking_mandiri + bData.booking_manual;
                     let pctMandiri = totalBookings > 0 ? Math.round((bData.booking_mandiri / totalBookings) * 100) : 0;
-                    let pctManual = totalBookings > 0 ? 100 - pctMandiri : 0;
+                    let pctManual = totalBookings > 0 ? Math.round((bData.booking_manual / totalBookings) * 100) : 0;
 
                     html = `
                         <div class="space-y-2 text-left">
