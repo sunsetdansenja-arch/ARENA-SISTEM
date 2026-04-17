@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V5.9 - Omni-Analytics Edition</title>
+    <title>ARENA SYSTEM V5.10 - Ghost Buster Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,7 +60,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.9 | Silakan Login</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.10 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -198,20 +198,28 @@
                 return opts;
             },
 
-            // OPSI B: STATUS UNIT TIDAK PEDULI TANGGAL MAIN! Pokoknya kalau belum Finish, berarti nyala!
+            // LOGIKA GHOST BUSTER (CEK UPDATE TERAKHIR)
             getUnitStatus: (uNum) => {
                 const unitLogs = STATE.logs.filter(l => {
                     const logNum = String(l.unit_arena).replace(/\D/g, ''); 
-                    return logNum === String(uNum); // OPSI B: Ignore Date Filter
+                    return logNum === String(uNum); 
                 });
-                const isPlaying = unitLogs.some(l => ['playing', 'main'].includes(String(l.status_unit_arena).toLowerCase()));
-                const isBooked = unitLogs.some(l => ['booked', 'book'].includes(String(l.status_unit_arena).toLowerCase()));
-                if (isPlaying) return 'main';
-                if (isBooked) return 'book';
+                
+                // Sort berdasarkan waktu update terakhir
+                unitLogs.sort((a, b) => {
+                    let timeA = new Date(a.updatedAt || a.createdAt || a.jam_mulai_sewa || 0).getTime();
+                    let timeB = new Date(b.updatedAt || b.createdAt || b.jam_mulai_sewa || 0).getTime();
+                    return timeB - timeA;
+                });
+
+                if (unitLogs.length > 0) {
+                    const latestStat = String(unitLogs[0].status_unit_arena).toLowerCase();
+                    if (['playing', 'main'].includes(latestStat)) return 'main';
+                    if (['booked', 'book'].includes(latestStat)) return 'book';
+                }
                 return 'kosong';
             },
 
-            // GENERATE OPSI UNIT DINAMIS
             generateUnitOptionsHtml: (branch, targetDateStr) => {
                 let units = [];
                 let b = String(branch).toLowerCase();
@@ -221,7 +229,7 @@
                 else units = [1];
 
                 return units.map(u => {
-                    const stat = APP.getUnitStatus(u); // Opsi B Mode Abadi
+                    const stat = APP.getUnitStatus(u); 
                     let label = `Unit ${u}`;
                     if (stat === 'main' || stat === 'book') { label += ` 🔴 (Terisi)`; } 
                     else { label += ` 🟢 (Kosong)`; }
@@ -276,13 +284,9 @@
                 const roleDisplay = STATE.user.userType === 'owner' ? 'SHARE HOLDER' : STATE.user.userType;
                 document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${roleDisplay.toUpperCase()}`;
 
-                // BUG FIX: Jaring Penangkap ID dari N8N
                 let raw = Array.isArray(res) ? res.map(i => {
                     let data = i.json !== undefined ? i.json : i;
-                    // Nangkep ID yang misah di luar body JSON
-                    if (i.id !== undefined && data.id === undefined) {
-                        data.id = i.id;
-                    }
+                    if (i.id !== undefined && data.id === undefined) { data.id = i.id; }
                     return data;
                 }) : [];
 
@@ -496,32 +500,49 @@
                     </div>`;
             },
 
-            // OPSI B: STATUS UNIT RENDER (ABADI)
+            // KOTAK UNIT RENDER (FIX WARNA + GHOST BUSTER)
             renderUnitBoxes: () => {
                 let html = '<div class="grid grid-cols-3 gap-2 mb-4">';
 
                 for(let i=1; i<=9; i++) {
                     const unitLogs = STATE.logs.filter(l => {
                         const uNum = String(l.unit_arena).replace(/\D/g, ''); 
-                        return uNum === String(i); // OPSI B: Tanpa filter tanggal
+                        return uNum === String(i); 
+                    });
+
+                    // Sort berdasarkan waktu update terakhir untuk ngusir Ghost Data
+                    unitLogs.sort((a, b) => {
+                        let timeA = new Date(a.updatedAt || a.createdAt || a.jam_mulai_sewa || 0).getTime();
+                        let timeB = new Date(b.updatedAt || b.createdAt || b.jam_mulai_sewa || 0).getTime();
+                        return timeB - timeA;
                     });
 
                     let status = 'kosong';
-                    const isPlaying = unitLogs.some(l => ['playing', 'main'].includes(String(l.status_unit_arena).toLowerCase()));
-                    const isBooked = unitLogs.some(l => ['booked', 'book'].includes(String(l.status_unit_arena).toLowerCase()));
+                    if (unitLogs.length > 0) {
+                        const latestStat = String(unitLogs[0].status_unit_arena).toLowerCase();
+                        if (['playing', 'main'].includes(latestStat)) status = 'main';
+                        else if (['booked', 'book'].includes(latestStat)) status = 'book';
+                    }
 
-                    if (isPlaying) status = 'main'; else if (isBooked) status = 'book';
-
-                    let bgClass = 'bg-black text-white'; let statusText = 'KOSONG';
-                    if (status === 'book') { bgClass = 'bg-yellow-400 text-black border-yellow-500'; statusText = 'BOOKED'; }
-                    else if (status === 'main') { bgClass = 'bg-green-500 text-white border-green-600'; statusText = 'MAIN'; }
+                    // KALIBRASI WARNA STANDAR KASIR
+                    let bgClass = 'bg-green-500 text-white border-green-700'; // IJO = KOSONG
+                    let statusText = 'KOSONG';
+                    
+                    if (status === 'book') { 
+                        bgClass = 'bg-[#FF6B00] text-white border-orange-800'; // OREN = BOOKED
+                        statusText = 'BOOKED'; 
+                    }
+                    else if (status === 'main') { 
+                        bgClass = 'bg-red-600 text-white border-red-800'; // MERAH = PLAYING
+                        statusText = 'PLAYING'; 
+                    }
 
                     let branchShadow = 'BANDA';
                     if (i <= 2) branchShadow = 'SABANG'; else if (i >= 8) branchShadow = 'ATIM';
 
                     html += `
                         <div class="border-2 rounded-lg pt-1 pb-2 px-2 text-center shadow-[2px_2px_0px_#000] ${bgClass} flex flex-col justify-center items-center relative">
-                            <p class="text-[7px] font-black opacity-50 tracking-widest mb-0.5">${branchShadow}</p>
+                            <p class="text-[7px] font-black opacity-70 tracking-widest mb-0.5">${branchShadow}</p>
                             <p class="font-black text-lg leading-none">U${i}</p>
                             <p class="text-[9px] font-bold uppercase mt-1">${statusText}</p>
                         </div>`;
@@ -557,10 +578,10 @@
                     cardClass = "border-2 border-gray-400 p-3 rounded-xl bg-gray-200 opacity-60 relative";
                     textClass = "line-through text-gray-500";
                 } else if (stat === 'booked' || stat === 'book') {
-                    cardClass = "border-2 border-yellow-500 p-3 rounded-xl bg-yellow-50 shadow-[2px_2px_0px_#eab308] relative";
+                    cardClass = "border-2 border-[#FF6B00] p-3 rounded-xl bg-orange-50 shadow-[2px_2px_0px_#ea580c] relative";
                 } else if (stat === 'playing' || stat === 'main') {
-                    cardClass = "border-2 border-green-500 p-3 rounded-xl bg-green-50 shadow-[2px_2px_0px_#22c55e] relative";
-                    badgeHtml = `<span class="absolute top-3 right-3 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>`;
+                    cardClass = "border-2 border-red-500 p-3 rounded-xl bg-red-50 shadow-[2px_2px_0px_#ef4444] relative";
+                    badgeHtml = `<span class="absolute top-3 right-3 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>`;
                 } else if (stat === 'finished' || stat === 'selesai') {
                     if (pay === 'Belum' || !pay) {
                         cardClass = "border-4 border-red-600 p-3 rounded-xl bg-red-50 shadow-[2px_2px_0px_#dc2626] relative";
