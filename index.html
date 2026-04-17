@@ -198,22 +198,18 @@
                 return opts;
             },
 
-            // ALGORITMA PENANGKAL CSV KEMBAR (MODE ABADI)
+            // LOGIKA GHOST BUSTER (MODE ABADI & ANTI-CSV KEMBAR)
             getUnitStatus: (uNum) => {
                 const unitLogs = STATE.logs.filter(l => {
                     const logNum = String(l.unit_arena).replace(/\D/g, ''); 
-                    return logNum === String(uNum); 
+                    return logNum === String(uNum);
                 });
-                
-                // Urutkan berdasarkan Index Asli Database (paling baru masuk/update, ada di urutan terbesar)
+
+                // Urutkan: Waktu update terbaru -> baris database terbawah (jika waktunya sama persis/hasil CSV)
                 unitLogs.sort((a, b) => {
-                    let timeA = new Date(a.updatedAt || 0).getTime();
-                    let timeB = new Date(b.updatedAt || 0).getTime();
-                    
-                    // Kalau waktunya beda mutlak (ada yg abis di klik ACC/Finished), pakai waktu
+                    let timeA = new Date(a.updatedAt || a.createdAt || a.jam_mulai_sewa || 0).getTime();
+                    let timeB = new Date(b.updatedAt || b.createdAt || b.jam_mulai_sewa || 0).getTime();
                     if (timeA !== timeB) return timeB - timeA;
-                    
-                    // Kalau waktunya kembar persis (gara-gara Import CSV), andalkan posisi baris database
                     return b._dbIndex - a._dbIndex;
                 });
 
@@ -225,6 +221,7 @@
                 return 'kosong';
             },
 
+            // GENERATE OPSI UNIT DINAMIS (CEK TANGGAL H+7)
             generateUnitOptionsHtml: (branch, targetDateStr) => {
                 let units = [];
                 let b = String(branch).toLowerCase();
@@ -234,7 +231,7 @@
                 else units = [1];
 
                 return units.map(u => {
-                    const stat = APP.getUnitStatus(u); 
+                    const stat = APP.getUnitStatus(u); // Pakai Mode Abadi buat dropdown ACC juga
                     let label = `Unit ${u}`;
                     if (stat === 'main' || stat === 'book') { label += ` 🔴 (Terisi)`; } 
                     else { label += ` 🟢 (Kosong)`; }
@@ -289,10 +286,11 @@
                 const roleDisplay = STATE.user.userType === 'owner' ? 'SHARE HOLDER' : STATE.user.userType;
                 document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${roleDisplay.toUpperCase()}`;
 
+                // INJECT _dbIndex UNTUK PENANGKAL CSV KEMBAR
                 let raw = Array.isArray(res) ? res.map((i, idx) => {
                     let data = i.json !== undefined ? i.json : i;
                     if (i.id !== undefined && data.id === undefined) { data.id = i.id; }
-                    data._dbIndex = idx; // Inject index asli penangkal CSV kembar
+                    data._dbIndex = idx; 
                     return data;
                 }) : [];
 
@@ -506,36 +504,16 @@
                     </div>`;
             },
 
-            // KOTAK UNIT RENDER (FIX WARNA + GHOST BUSTER)
+            // RENDER KOTAK UNIT DENGAN WARNA SESUAI KASIR (GHOST BUSTER)
             renderUnitBoxes: () => {
                 let html = '<div class="grid grid-cols-3 gap-2 mb-4">';
 
                 for(let i=1; i<=9; i++) {
-                    const unitLogs = STATE.logs.filter(l => {
-                        const uNum = String(l.unit_arena).replace(/\D/g, ''); 
-                        return uNum === String(i); 
-                    });
+                    const status = APP.getUnitStatus(i);
 
-                    // Sort berdasarkan urutan baris terbawah di database (Ghost Buster)
-                    unitLogs.sort((a, b) => {
-                        let timeA = new Date(a.updatedAt || 0).getTime();
-                        let timeB = new Date(b.updatedAt || 0).getTime();
-                        
-                        if (timeA !== timeB) return timeB - timeA;
-                        return b._dbIndex - a._dbIndex;
-                    });
-
-                    let status = 'kosong';
-                    if (unitLogs.length > 0) {
-                        const latestStat = String(unitLogs[0].status_unit_arena).toLowerCase();
-                        if (['playing', 'main'].includes(latestStat)) status = 'main';
-                        else if (['booked', 'book'].includes(latestStat)) status = 'book';
-                    }
-
-                    // KALIBRASI WARNA STANDAR KASIR
                     let bgClass = 'bg-green-500 text-white border-green-700'; // IJO = KOSONG
                     let statusText = 'KOSONG';
-                    
+
                     if (status === 'book') { 
                         bgClass = 'bg-[#FF6B00] text-white border-orange-800'; // OREN = BOOKED
                         statusText = 'BOOKED'; 
@@ -559,7 +537,7 @@
             },
 
             renderSingleLogCard: (l) => {
-                const rowId = l.id || '';
+                const rowId = l.id || l.row_number || l._rowIndex || '';
                 const unitLabel = String(l.unit_arena).toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
 
@@ -647,7 +625,7 @@
                         <h3 class="font-black text-red-600 mb-3 text-center uppercase flex items-center justify-center gap-2"><span>🚨</span> PESANAN BARU! <span>🚨</span></h3>
                         <div class="space-y-3">
                             ${pendingLogs.map(l => {
-                                const rowId = l.id || '';
+                                const rowId = l.id || l.row_number || l._rowIndex || '';
                                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
                                 const tglMainStr = (l.jam_mulai_sewa||'').substring(0,10);
                                 
@@ -689,14 +667,12 @@
                 `;
             },
 
-            // ===== FILTER LOG BERDASARKAN BULAN (ALL DATA) =====
             getLogListHTML: (cabangFilter) => {
                 const monthStr = APP.getMonthStr(); 
                 
                 const recentLogs = STATE.logs.filter(l => { 
                     let dStr = l.jam_mulai_sewa ? String(l.jam_mulai_sewa).substring(0,7) : '';
                     if(!dStr && l.createdAt) dStr = String(l.createdAt).substring(0,7);
-                    
                     return dStr === monthStr || dStr === ''; 
                 });
 
@@ -1261,3 +1237,58 @@
                         <p>Waktu Cetak: ${printDate}</p>
                     </div>`;
                 }
+
+                // WATERMARK BEUNA AGENCY PADA HALAMAN PRINT A4
+                printHtml += `
+                    <div style="margin-top: 30px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: 'Inter', sans-serif;">
+                        <p style="font-size: 8px; color: #9ca3af; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">System By</p>
+                        <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/beuna-agency/main/beuna%20logo%20png.png" alt="Beuna Agency" style="height: 14px; opacity: 0.8; filter: grayscale(100%);">
+                    </div>
+                </div>`;
+
+                document.getElementById('print-area').innerHTML = printHtml;
+                document.getElementById('print-area').classList.remove('hidden'); 
+                window.print(); 
+                document.getElementById('print-area').classList.add('hidden');
+            },
+
+            renderOwner: () => {
+                document.getElementById('view-owner').classList.remove('hidden');
+                const branchStr = STATE.user.branch; const todayStr = APP.getTodayStr(); const monthStr = APP.getMonthStr(); 
+                let omsetToday = 0; let omsetMonth = 0;
+                
+                const ownerLogs = STATE.logs.filter(l => {
+                    const dateStr = (l.jam_mulai_sewa || '').substring(0,10);
+                    return (l.cabang_arena === branchStr || (branchStr==='Banda Aceh' && l.cabang_arena==='Banda')) && dateStr.startsWith(monthStr) && !['batal', 'pending'].includes(String(l.status_unit_arena).toLowerCase());
+                });
+
+                ownerLogs.forEach(l => {
+                    if ((l.jam_mulai_sewa||'').substring(0,10) === todayStr) omsetToday += Number(l.tagihan_arena);
+                    omsetMonth += Number(l.tagihan_arena);
+                });
+
+                document.getElementById('owner-omset-today').innerText = APP.formatRp(omsetToday); document.getElementById('owner-omset-month').innerText = APP.formatRp(omsetMonth);
+                
+                const daysName = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+                document.getElementById('owner-logs').innerHTML = ownerLogs.reverse().map(l => {
+                    let dayStr = '';
+                    if (l.jam_mulai_sewa) {
+                        const dObj = new Date(l.jam_mulai_sewa.replace(' ', 'T'));
+                        if (!isNaN(dObj)) dayStr = daysName[dObj.getDay()];
+                    }
+                    return `
+                    <div class="mario-card p-3 bg-white flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-black text-sm text-[#FF6B00] leading-none mb-1">${dayStr}</p>
+                            <p class="font-black">${l.nama_pelanggan_arena} <span class="bg-gray-200 px-1 rounded text-[10px]">U${l.unit_arena}</span></p>
+                            <p class="text-[10px] text-gray-500 font-bold">${(l.jam_mulai_sewa||'').substring(0,16)}</p>
+                        </div>
+                        <div class="text-right"><p class="font-black text-green-600">${APP.formatRp(l.tagihan_arena)}</p><p class="text-[10px] font-bold text-gray-400">${l.paket_arena}</p></div>
+                    </div>`
+                }).join('') || '<p class="text-center text-white font-bold">Tidak ada riwayat.</p>';
+            }
+        };
+        APP.init();
+    </script>
+</body>
+</html>
