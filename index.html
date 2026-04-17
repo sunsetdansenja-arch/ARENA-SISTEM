@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V5.7 - Omni-Analytics Edition</title>
+    <title>ARENA SYSTEM V5.8 - Omni-Analytics Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,7 +60,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.7 | Silakan Login</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.8 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -278,7 +278,16 @@
                 const roleDisplay = STATE.user.userType === 'owner' ? 'SHARE HOLDER' : STATE.user.userType;
                 document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${roleDisplay.toUpperCase()}`;
 
-                let raw = Array.isArray(res) ? res.map(i => i.json !== undefined ? i.json : i) : [];
+                // BUG FIX: Jaring Penangkap ID dari N8N
+                let raw = Array.isArray(res) ? res.map(i => {
+                    let data = i.json !== undefined ? i.json : i;
+                    // Nangkep ID yang misah di luar body JSON
+                    if (i.id !== undefined && data.id === undefined) {
+                        data.id = i.id;
+                    }
+                    return data;
+                }) : [];
+
                 STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
                 STATE.expenses = raw.filter(i => i.pengeluaran_arena !== undefined);
 
@@ -524,7 +533,7 @@
             },
 
             renderSingleLogCard: (l) => {
-                const rowId = l.id || l.row_number || l._rowIndex;
+                const rowId = l.id || '';
                 const unitLabel = String(l.unit_arena).toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
 
@@ -573,7 +582,7 @@
                     <div class="flex justify-between items-start mb-2 border-b-2 border-dashed border-gray-300 pb-2">
                         <div class="flex flex-col">
                             <span class="font-black text-xl text-[#FF6B00] leading-none mb-1 ${textClass}">${dayStr}</span>
-                            <span class="font-bold text-[10px] text-gray-500">${l.jam_mulai_sewa || ''}</span>
+                            <span class="font-bold text-[10px] text-gray-500">${l.jam_mulai_sewa || l.createdAt.substring(0,16)}</span>
                         </div>
                         <span class="font-black text-[10px] bg-black text-white px-2 py-1 rounded-md h-fit mt-1">${unitLabel} (${cabLabel})</span>
                     </div>
@@ -612,7 +621,7 @@
                         <h3 class="font-black text-red-600 mb-3 text-center uppercase flex items-center justify-center gap-2"><span>🚨</span> PESANAN BARU! <span>🚨</span></h3>
                         <div class="space-y-3">
                             ${pendingLogs.map(l => {
-                                const rowId = l.id || l.row_number || l._rowIndex;
+                                const rowId = l.id || '';
                                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
                                 const tglMainStr = (l.jam_mulai_sewa||'').substring(0,10);
                                 
@@ -644,7 +653,7 @@
                         <h2 class="font-black text-center border-b-2 border-black pb-2 mb-4 uppercase">Status 9 Unit</h2>
                         <div id="dashboard-unit-boxes">${APP.renderUnitBoxes()}</div>
                         <div class="flex justify-between items-center mb-3 mt-4 border-t-2 border-dashed border-gray-400 pt-4">
-                            <h3 class="font-black text-[11px]">LOGS (KEMARIN, HARI INI & BESOK)</h3>
+                            <h3 class="font-black text-[11px]">LOGS (SEMUA DI BULAN INI)</h3>
                             <select id="log-filter-cabang" onchange="APP.updateLogList()" class="mario-input w-auto p-1 text-xs">
                                 <option value="ALL">Semua Cabang</option><option value="Sabang">Sabang</option><option value="Banda">Banda Aceh</option><option value="Aceh Timur">Aceh Timur</option>
                             </select>
@@ -654,9 +663,19 @@
                 `;
             },
 
+            // ===== FILTER LOG BERDASARKAN BULAN (ALL DATA) =====
             getLogListHTML: (cabangFilter) => {
-                const todayStr = APP.getTodayStr(); const yestStr = APP.getYesterdayStr(); const tomorrowStr = APP.getTomorrowStr();
-                const recentLogs = STATE.logs.filter(l => { const d = (l.jam_mulai_sewa||'').substring(0,10); return d === todayStr || d === yestStr || d === tomorrowStr; });
+                const monthStr = APP.getMonthStr(); // Misal "2026-04"
+                
+                // Cuma nampilin yang tanggalnya bulan ini (atau yang datanya kosong/null)
+                const recentLogs = STATE.logs.filter(l => { 
+                    // Kalau jam_mulai_sewa kosong, kita pake createdAt. Kalau dua duanya kosong, anggep bulan ini aja (biar testing muncul)
+                    let dStr = l.jam_mulai_sewa ? String(l.jam_mulai_sewa).substring(0,7) : '';
+                    if(!dStr && l.createdAt) dStr = String(l.createdAt).substring(0,7);
+                    
+                    return dStr === monthStr || dStr === ''; 
+                });
+
                 const filtered = recentLogs.filter(l => String(l.status_unit_arena).toLowerCase() !== 'pending');
 
                 if (cabangFilter === 'ALL') {
@@ -672,10 +691,10 @@
                                 </div>`;
                         }
                     });
-                    return groupedHtml || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
+                    return groupedHtml || '<p class="text-center font-bold text-gray-500">Tidak ada log di bulan ini.</p>';
                 } else {
                     const bLogs = filtered.filter(l => l.cabang_arena === cabangFilter || (cabangFilter==='Banda'&&l.cabang_arena==='Banda Aceh') || (cabangFilter==='Aceh Timur'&&l.cabang_arena==='Atim'));
-                    return bLogs.reverse().map(l => APP.renderSingleLogCard(l)).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log.</p>';
+                    return bLogs.reverse().map(l => APP.renderSingleLogCard(l)).join('') || '<p class="text-center font-bold text-gray-500">Tidak ada log di bulan ini.</p>';
                 }
             },
 
