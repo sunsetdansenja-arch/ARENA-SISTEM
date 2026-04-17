@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARENA SYSTEM V5.10 - Ghost Buster Edition</title>
+    <title>ARENA SYSTEM V5.11 - Ultimate Fix Edition</title>
     
     <link rel="icon" href="https://raw.githubusercontent.com/sunsetdansenja-arch/bot-arrena-assets/main/logo%20arena%20gaming.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,7 +60,7 @@
     <header class="max-w-md mx-auto flex justify-between items-center bg-black p-4 sticky top-0 z-40 border-b-4 border-yellow-400">
         <div>
             <h1 class="text-lg font-black text-white">ARENA SYSTEM</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.10 | Silakan Login</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-yellow-400">V5.11 | Silakan Login</p>
         </div>
         <div id="header-actions" class="hidden flex gap-2">
             <button onclick="APP.loadDashboard()" class="bg-blue-500 text-white p-2 rounded-lg border-2 border-white">🔄</button>
@@ -198,18 +198,23 @@
                 return opts;
             },
 
-            // LOGIKA GHOST BUSTER (CEK UPDATE TERAKHIR)
+            // ALGORITMA PENANGKAL CSV KEMBAR (MODE ABADI)
             getUnitStatus: (uNum) => {
                 const unitLogs = STATE.logs.filter(l => {
                     const logNum = String(l.unit_arena).replace(/\D/g, ''); 
                     return logNum === String(uNum); 
                 });
                 
-                // Sort berdasarkan waktu update terakhir
+                // Urutkan berdasarkan Index Asli Database (paling baru masuk/update, ada di urutan terbesar)
                 unitLogs.sort((a, b) => {
-                    let timeA = new Date(a.updatedAt || a.createdAt || a.jam_mulai_sewa || 0).getTime();
-                    let timeB = new Date(b.updatedAt || b.createdAt || b.jam_mulai_sewa || 0).getTime();
-                    return timeB - timeA;
+                    let timeA = new Date(a.updatedAt || 0).getTime();
+                    let timeB = new Date(b.updatedAt || 0).getTime();
+                    
+                    // Kalau waktunya beda mutlak (ada yg abis di klik ACC/Finished), pakai waktu
+                    if (timeA !== timeB) return timeB - timeA;
+                    
+                    // Kalau waktunya kembar persis (gara-gara Import CSV), andalkan posisi baris database
+                    return b._dbIndex - a._dbIndex;
                 });
 
                 if (unitLogs.length > 0) {
@@ -284,9 +289,10 @@
                 const roleDisplay = STATE.user.userType === 'owner' ? 'SHARE HOLDER' : STATE.user.userType;
                 document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${roleDisplay.toUpperCase()}`;
 
-                let raw = Array.isArray(res) ? res.map(i => {
+                let raw = Array.isArray(res) ? res.map((i, idx) => {
                     let data = i.json !== undefined ? i.json : i;
                     if (i.id !== undefined && data.id === undefined) { data.id = i.id; }
+                    data._dbIndex = idx; // Inject index asli penangkal CSV kembar
                     return data;
                 }) : [];
 
@@ -510,11 +516,13 @@
                         return uNum === String(i); 
                     });
 
-                    // Sort berdasarkan waktu update terakhir untuk ngusir Ghost Data
+                    // Sort berdasarkan urutan baris terbawah di database (Ghost Buster)
                     unitLogs.sort((a, b) => {
-                        let timeA = new Date(a.updatedAt || a.createdAt || a.jam_mulai_sewa || 0).getTime();
-                        let timeB = new Date(b.updatedAt || b.createdAt || b.jam_mulai_sewa || 0).getTime();
-                        return timeB - timeA;
+                        let timeA = new Date(a.updatedAt || 0).getTime();
+                        let timeB = new Date(b.updatedAt || 0).getTime();
+                        
+                        if (timeA !== timeB) return timeB - timeA;
+                        return b._dbIndex - a._dbIndex;
                     });
 
                     let status = 'kosong';
@@ -1253,58 +1261,3 @@
                         <p>Waktu Cetak: ${printDate}</p>
                     </div>`;
                 }
-
-                // WATERMARK BEUNA AGENCY PADA HALAMAN PRINT A4
-                printHtml += `
-                    <div style="margin-top: 30px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 15px; font-family: 'Inter', sans-serif;">
-                        <p style="font-size: 8px; color: #9ca3af; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">System By</p>
-                        <img src="https://raw.githubusercontent.com/sunsetdansenja-arch/beuna-agency/main/beuna%20logo%20png.png" alt="Beuna Agency" style="height: 14px; opacity: 0.8; filter: grayscale(100%);">
-                    </div>
-                </div>`;
-
-                document.getElementById('print-area').innerHTML = printHtml;
-                document.getElementById('print-area').classList.remove('hidden'); 
-                window.print(); 
-                document.getElementById('print-area').classList.add('hidden');
-            },
-
-            renderOwner: () => {
-                document.getElementById('view-owner').classList.remove('hidden');
-                const branchStr = STATE.user.branch; const todayStr = APP.getTodayStr(); const monthStr = APP.getMonthStr(); 
-                let omsetToday = 0; let omsetMonth = 0;
-                
-                const ownerLogs = STATE.logs.filter(l => {
-                    const dateStr = (l.jam_mulai_sewa || '').substring(0,10);
-                    return (l.cabang_arena === branchStr || (branchStr==='Banda Aceh' && l.cabang_arena==='Banda')) && dateStr.startsWith(monthStr) && !['batal', 'pending'].includes(String(l.status_unit_arena).toLowerCase());
-                });
-
-                ownerLogs.forEach(l => {
-                    if ((l.jam_mulai_sewa||'').substring(0,10) === todayStr) omsetToday += Number(l.tagihan_arena);
-                    omsetMonth += Number(l.tagihan_arena);
-                });
-
-                document.getElementById('owner-omset-today').innerText = APP.formatRp(omsetToday); document.getElementById('owner-omset-month').innerText = APP.formatRp(omsetMonth);
-                
-                const daysName = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-                document.getElementById('owner-logs').innerHTML = ownerLogs.reverse().map(l => {
-                    let dayStr = '';
-                    if (l.jam_mulai_sewa) {
-                        const dObj = new Date(l.jam_mulai_sewa.replace(' ', 'T'));
-                        if (!isNaN(dObj)) dayStr = daysName[dObj.getDay()];
-                    }
-                    return `
-                    <div class="mario-card p-3 bg-white flex justify-between items-center text-xs">
-                        <div>
-                            <p class="font-black text-sm text-[#FF6B00] leading-none mb-1">${dayStr}</p>
-                            <p class="font-black">${l.nama_pelanggan_arena} <span class="bg-gray-200 px-1 rounded text-[10px]">U${l.unit_arena}</span></p>
-                            <p class="text-[10px] text-gray-500 font-bold">${(l.jam_mulai_sewa||'').substring(0,16)}</p>
-                        </div>
-                        <div class="text-right"><p class="font-black text-green-600">${APP.formatRp(l.tagihan_arena)}</p><p class="text-[10px] font-bold text-gray-400">${l.paket_arena}</p></div>
-                    </div>`
-                }).join('') || '<p class="text-center text-white font-bold">Tidak ada riwayat.</p>';
-            }
-        };
-        APP.init();
-    </script>
-</body>
-</html>
