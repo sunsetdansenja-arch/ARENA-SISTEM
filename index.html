@@ -278,16 +278,7 @@
                 const roleDisplay = STATE.user.userType === 'owner' ? 'SHARE HOLDER' : STATE.user.userType;
                 document.getElementById('user-info-text').innerText = `${STATE.user.username.toUpperCase()} | ${roleDisplay.toUpperCase()}`;
 
-                // BUG FIX: Jaring Penangkap ID dari N8N
-                let raw = Array.isArray(res) ? res.map(i => {
-                    let data = i.json !== undefined ? i.json : i;
-                    // Nangkep ID yang misah di luar body JSON
-                    if (i.id !== undefined && data.id === undefined) {
-                        data.id = i.id;
-                    }
-                    return data;
-                }) : [];
-
+                let raw = Array.isArray(res) ? res.map(i => i.json !== undefined ? i.json : i) : [];
                 STATE.logs = raw.filter(i => i.tagihan_arena !== undefined);
                 STATE.expenses = raw.filter(i => i.pengeluaran_arena !== undefined);
 
@@ -533,8 +524,7 @@
             },
 
             renderSingleLogCard: (l) => {
-                // BUG FIX: Pake id aman
-                const rowId = l.id || '';
+                const rowId = l.id || l.row_number || l._rowIndex;
                 const unitLabel = String(l.unit_arena).toLowerCase().includes('unit') ? l.unit_arena : 'Unit ' + l.unit_arena;
                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
 
@@ -622,8 +612,7 @@
                         <h3 class="font-black text-red-600 mb-3 text-center uppercase flex items-center justify-center gap-2"><span>🚨</span> PESANAN BARU! <span>🚨</span></h3>
                         <div class="space-y-3">
                             ${pendingLogs.map(l => {
-                                // BUG FIX: Pake id aman
-                                const rowId = l.id || '';
+                                const rowId = l.id || l.row_number || l._rowIndex;
                                 const cabLabel = l.cabang_arena === 'Banda' ? 'Banda Aceh' : l.cabang_arena;
                                 const tglMainStr = (l.jam_mulai_sewa||'').substring(0,10);
                                 
